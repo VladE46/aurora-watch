@@ -8,8 +8,8 @@
 const BREVO_API = 'https://api.brevo.com/v3/smtp/email';
 
 const FROM = {
-  email: process.env.BREVO_SENDER_EMAIL || 'alerts@aurorawatch.app',
-  name:  process.env.BREVO_SENDER_NAME  || 'AuroraWatch',
+  email: process.env.BREVO_SENDER_EMAIL || 'alerts@auroracheck.app',
+  name:  process.env.BREVO_SENDER_NAME  || 'AuroraCheck',
 };
 
 async function sendEmail({ to, subject, htmlContent }) {
@@ -57,7 +57,7 @@ async function sendConfirmation({ email, locationName, threshold, unsubToken, fr
       <div style="background:linear-gradient(135deg,rgba(29,158,117,0.2),rgba(83,74,183,0.15));padding:32px 32px 24px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.08);">
         <div style="font-size:32px;margin-bottom:12px;">🌌</div>
         <h1 style="color:#5DCAA5;font-size:22px;font-weight:600;margin:0 0 8px;">You're subscribed!</h1>
-        <p style="color:rgba(255,255,255,0.6);font-size:14px;margin:0;">AuroraWatch alerts are active for your location.</p>
+        <p style="color:rgba(255,255,255,0.6);font-size:14px;margin:0;">AuroraCheck alerts are active for your location.</p>
       </div>
 
       <div style="padding:28px 32px;">
@@ -86,14 +86,14 @@ async function sendConfirmation({ email, locationName, threshold, unsubToken, fr
         </p>
       </div>
     </div>
-    <p style="text-align:center;font-size:11px;color:rgba(255,255,255,0.2);margin-top:20px;">AuroraWatch · Data from NOAA Space Weather Prediction Center</p>
+    <p style="text-align:center;font-size:11px;color:rgba(255,255,255,0.2);margin-top:20px;">AuroraCheck · Data from NOAA Space Weather Prediction Center</p>
   </div>
 </body>
 </html>`;
 
   return sendEmail({
     to: email,
-    subject: `✓ AuroraWatch alerts active for ${locationName}`,
+    subject: `✓ AuroraCheck alerts active for ${locationName}`,
     htmlContent: html,
   });
 }
@@ -161,7 +161,7 @@ async function sendAuroraAlert({ email, locationName, prob, kp, cloud, threshold
         </p>
       </div>
     </div>
-    <p style="text-align:center;font-size:11px;color:rgba(255,255,255,0.2);margin-top:20px;">AuroraWatch · Data from NOAA Space Weather Prediction Center</p>
+    <p style="text-align:center;font-size:11px;color:rgba(255,255,255,0.2);margin-top:20px;">AuroraCheck · Data from NOAA Space Weather Prediction Center</p>
   </div>
 </body>
 </html>`;
