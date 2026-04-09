@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AuroraWatch — Live Map</title>
+<title>AuroraCheck — Live Map</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500&family=DM+Sans:wght@300;400;500;600&display=swap');
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -239,7 +239,7 @@ function noaaJsonUrl() {
 async function fetchNoaaJson() {
   // Try backend proxy first
   try {
-    const r = await fetch('http://localhost:3001/api/aurora-grid', { signal: AbortSignal.timeout(4000) });
+    const r = await fetch('https://api.auroracheck.com/api/aurora-grid', { signal: AbortSignal.timeout(4000) });
     if (r.ok) return await r.json();
   } catch {}
 
