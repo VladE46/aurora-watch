@@ -1,6 +1,6 @@
 /**
  * server.js
- * AuroraWatch backend — Express API + cron alerts in one process.
+ * AuroraCheck backend — Express API + cron alerts in one process.
  * Deploy to Railway, Render, or Fly.io (all have free tiers).
  */
 
@@ -66,7 +66,7 @@ async function main() {
   await initDb();
   await startCron();
   app.listen(PORT, () => {
-    console.log(`AuroraWatch backend running on http://localhost:${PORT}`);
+    console.log(`AuroraCheck backend running on http://localhost:${PORT}`);
     console.log(`Frontend: ${process.env.FRONTEND_URL || '(set FRONTEND_URL in .env)'}`);
   });
 }
