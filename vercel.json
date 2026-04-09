@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/aurora-forecast.html"
+    },
+    {
+      "source": "/map",
+      "destination": "/aurora-map.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/aurora-admin.html"
+    }
+  ]
+}
