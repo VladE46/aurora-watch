@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AuroraWatch — Will you see the aurora tonight?</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0c0c1a; color: #fff; min-height: 100vh; }
+
+  /* NAV */
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; border-bottom: 0.5px solid rgba(255,255,255,0.08); }
+  .logo { font-size: 16px; font-weight: 600; color: #5DCAA5; letter-spacing: -0.3px; }
+  .logo span { color: rgba(255,255,255,0.8); font-weight: 400; }
+  .nav-links { display: flex; gap: 1.5rem; }
+  .nav-links a { font-size: 13px; color: rgba(255,255,255,0.55); text-decoration: none; }
+  .nav-links a:hover { color: #fff; }
+
+  /* HERO */
+  .hero {
+    position: relative; overflow: hidden;
+    padding: 5rem 2rem 4rem; text-align: center;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(29,158,117,0.15) 0%, transparent 65%),
+                radial-gradient(ellipse 60% 40% at 30% 80%, rgba(83,74,183,0.12) 0%, transparent 60%),
+                #0c0c1a;
+  }
+  .stars {
+    position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,0.9) 0%, transparent 100%),
+      radial-gradient(1px 1px at 28% 7%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 55% 12%, rgba(255,255,255,0.8) 0%, transparent 100%),
+      radial-gradient(1px 1px at 78% 4%, rgba(255,255,255,0.7) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 22%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 4% 40%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 42% 35%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 68% 28%, rgba(255,255,255,0.9) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 48%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 20% 62%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 93% 68%, rgba(255,255,255,0.7) 0%, transparent 100%),
+      radial-gradient(1px 1px at 50% 75%, rgba(255,255,255,0.4) 0%, transparent 100%);
+  }
+  .aurora-band {
+    position: absolute; bottom: 0; left: 0; width: 100%; height: 160px;
+    background: linear-gradient(0deg,
+      rgba(29,158,117,0.18) 0%,
+      rgba(29,158,117,0.08) 40%,
+      rgba(83,74,183,0.06) 70%,
+      transparent 100%);
+  }
+  .hero-content { position: relative; z-index: 2; max-width: 600px; margin: 0 auto; }
+  .hero h1 { font-size: 38px; font-weight: 700; line-height: 1.15; margin-bottom: 12px; letter-spacing: -0.5px; }
+  .hero h1 .accent { color: #5DCAA5; }
+  .hero p { font-size: 16px; color: rgba(255,255,255,0.6); margin-bottom: 2.5rem; }
+
+  /* SEARCH */
+  .search-wrap { display: flex; gap: 8px; max-width: 480px; margin: 0 auto; }
+  .search-wrap input {
+    flex: 1; background: rgba(255,255,255,0.08); border: 0.5px solid rgba(255,255,255,0.2);
+    border-radius: 10px; padding: 13px 16px; font-size: 15px; color: #fff; outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-wrap input::placeholder { color: rgba(255,255,255,0.4); }
+  .search-wrap input:focus { border-color: rgba(93,202,165,0.6); }
+  .btn-primary {
+    background: #1D9E75; border: none; border-radius: 10px;
+    color: #fff; padding: 13px 22px; font-size: 15px; font-weight: 600; cursor: pointer;
+    white-space: nowrap; transition: background 0.2s;
+  }
+  .btn-primary:hover { background: #0F6E56; }
+  .geo-link {
+    margin-top: 12px; font-size: 13px; color: rgba(255,255,255,0.45);
+    cursor: pointer; text-decoration: underline; background: none; border: none;
+    display: block; width: 100%; text-align: center;
+  }
+  .geo-link:hover { color: rgba(255,255,255,0.75); }
+
+  /* MAIN */
+  .main { max-width: 700px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  /* LOADING */
+  .loading { display: none; text-align: center; padding: 3rem; }
+  .loading.show { display: block; }
+  .loading p { font-size: 14px; color: rgba(255,255,255,0.5); margin-top: 16px; }
+  .dots { display: flex; justify-content: center; gap: 8px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #1D9E75; animation: pulse 1.2s ease-in-out infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.75)} }
+
+  /* RESULT CARD */
+  .result-card {
+    background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.12);
+    border-radius: 16px; padding: 1.75rem; margin-bottom: 1.25rem;
+    display: none; animation: fadeIn 0.4s ease;
+  }
+  .result-card.show { display: block; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
+
+  .result-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; }
+  .loc-name { font-size: 20px; font-weight: 600; }
+  .loc-sub { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+
+  .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+  .metric { background: rgba(255,255,255,0.05); border: 0.5px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1rem; text-align: center; }
+  .metric-label { font-size: 11px; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .metric-value { font-size: 26px; font-weight: 700; }
+  .metric-unit { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+
+  /* GAUGE */
+  .gauge-section { margin-bottom: 1.5rem; }
+  .gauge-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+  .gauge-header span { font-size: 13px; color: rgba(255,255,255,0.5); }
+  .gauge-bar { height: 10px; border-radius: 99px; background: rgba(255,255,255,0.08); overflow: hidden; }
+  .gauge-fill { height: 100%; border-radius: 99px; transition: width 1s ease; }
+
+  /* VERDICT */
+  .verdict { border-radius: 12px; padding: 14px 16px; display: flex; gap: 14px; align-items: flex-start; }
+  .verdict-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .verdict-body {}
+  .verdict-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .verdict-desc { font-size: 13px; opacity: 0.85; line-height: 1.5; }
+
+  .verdict.good { background: rgba(29,158,117,0.15); border: 0.5px solid rgba(29,158,117,0.3); }
+  .verdict.good .verdict-dot { background: #5DCAA5; }
+  .verdict.good .verdict-title { color: #5DCAA5; }
+  .verdict.good .verdict-desc { color: rgba(93,202,165,0.85); }
+
+  .verdict.medium { background: rgba(186,117,23,0.15); border: 0.5px solid rgba(186,117,23,0.3); }
+  .verdict.medium .verdict-dot { background: #EF9F27; }
+  .verdict.medium .verdict-title { color: #EF9F27; }
+  .verdict.medium .verdict-desc { color: rgba(239,159,39,0.85); }
+
+  .verdict.poor { background: rgba(226,75,74,0.12); border: 0.5px solid rgba(226,75,74,0.25); }
+  .verdict.poor .verdict-dot { background: #E24B4A; }
+  .verdict.poor .verdict-title { color: #E24B4A; }
+  .verdict.poor .verdict-desc { color: rgba(226,75,74,0.85); }
+
+  /* KP PILLS */
+  .kp-guide { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .kp-pill { font-size: 11px; padding: 4px 10px; border-radius: 99px; border: 0.5px solid; }
+  .kp-low { background: rgba(29,158,117,0.12); border-color: rgba(29,158,117,0.3); color: #5DCAA5; }
+  .kp-med { background: rgba(186,117,23,0.12); border-color: rgba(186,117,23,0.3); color: #EF9F27; }
+  .kp-high { background: rgba(226,75,74,0.12); border-color: rgba(226,75,74,0.3); color: #E24B4A; }
+
+  /* DATA SOURCE */
+  .data-note { font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 14px; padding-top: 14px; border-top: 0.5px solid rgba(255,255,255,0.07); }
+
+  /* SUBSCRIBE */
+  .subscribe-card {
+    background: rgba(83,74,183,0.1); border: 0.5px solid rgba(83,74,183,0.3);
+    border-radius: 16px; padding: 1.75rem; display: none; animation: fadeIn 0.4s ease 0.1s both;
+  }
+  .subscribe-card.show { display: block; }
+  .sub-header { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 1rem; }
+  .sub-icon { width: 40px; height: 40px; background: rgba(83,74,183,0.25); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 18px; }
+  .sub-header h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .sub-header p { font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.5; }
+  .sub-form { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .sub-form input[type="email"] {
+    flex: 1; min-width: 200px; background: rgba(255,255,255,0.07); border: 0.5px solid rgba(255,255,255,0.15);
+    border-radius: 10px; padding: 11px 14px; font-size: 14px; color: #fff; outline: none;
+  }
+  .sub-form input:focus { border-color: rgba(143,169,236,0.6); }
+  .sub-form input::placeholder { color: rgba(255,255,255,0.35); }
+  .btn-sub { background: #534AB7; border: none; border-radius: 10px; color: #fff; padding: 11px 20px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-sub:hover { background: #3C3489; }
+  .threshold-row { display: flex; align-items: center; gap: 10px; margin-bottom: 0; }
+  .threshold-row label { font-size: 13px; color: rgba(255,255,255,0.5); }
+  .threshold-row select {
+    font-size: 13px; padding: 7px 12px; border-radius: 8px;
+    background: rgba(255,255,255,0.07); border: 0.5px solid rgba(255,255,255,0.15);
+    color: #fff; outline: none; cursor: pointer;
+  }
+  .success-msg {
+    display: none; background: rgba(29,158,117,0.15); border: 0.5px solid rgba(29,158,117,0.3);
+    border-radius: 10px; padding: 12px 16px; font-size: 14px; color: #5DCAA5; font-weight: 500; margin-top: 12px;
+  }
+  .success-msg.show { display: block; }
+
+  /* FOOTER */
+  footer { text-align: center; padding: 2rem; font-size: 12px; color: rgba(255,255,255,0.25); border-top: 0.5px solid rgba(255,255,255,0.06); }
+
+  @media (max-width: 500px) {
+    .hero h1 { font-size: 26px; }
+    .metrics { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .metric { padding: 0.75rem 0.5rem; }
+    .metric-value { font-size: 20px; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Aurora<span>Watch</span></div>
+  <div class="nav-links">
+    <a href="aurora-map.html">Live map ↗</a>
+    <a href="#">About Kp</a>
+    <a href="#">FAQ</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="stars"></div>
+  <div class="aurora-band"></div>
+  <div class="hero-content">
+    <h1>Will you see the <span class="accent">aurora</span> tonight?</h1>
+    <p>Real-time probability forecast for your location — powered by NOAA space weather data.</p>
+    <div class="search-wrap">
+      <input type="text" id="locationInput" placeholder="Search a city — e.g. Tromsø, Fairbanks, Rovaniemi..." />
+      <button class="btn-primary" onclick="searchLocation()">Check now</button>
+    </div>
+    <button class="geo-link" onclick="useMyLocation()">&#x25CE; Use my current location</button>
+  </div>
+</section>
+
+<div class="main">
+  <div class="loading" id="loading">
+    <div class="dots">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+    <p>Fetching aurora data from NOAA...</p>
+  </div>
+
+  <div class="result-card" id="resultCard">
+    <div class="result-header">
+      <div>
+        <div class="loc-name" id="locName">—</div>
+        <div class="loc-sub" id="locSub">NOAA OVATION model · Updated just now</div>
+      </div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-label">Aurora chance</div>
+        <div class="metric-value" id="probValue" style="color:#5DCAA5;">—</div>
+        <div class="metric-unit">probability</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Kp index</div>
+        <div class="metric-value" id="kpValue" style="color:#AFA9EC;">—</div>
+        <div class="metric-unit">geomagnetic</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Cloud cover</div>
+        <div class="metric-value" id="cloudValue" style="color:rgba(255,255,255,0.75);">—</div>
+        <div class="metric-unit">sky coverage</div>
+      </div>
+    </div>
+
+    <div class="gauge-section">
+      <div class="gauge-header">
+        <span>Aurora probability</span>
+        <span id="probLabel">—</span>
+      </div>
+      <div class="gauge-bar">
+        <div class="gauge-fill" id="gaugeFill" style="width:0%;background:#1D9E75;"></div>
+      </div>
+    </div>
+
+    <div class="verdict" id="verdict">
+      <div class="verdict-dot"></div>
+      <div class="verdict-body">
+        <div class="verdict-title" id="verdictTitle">—</div>
+        <div class="verdict-desc" id="verdictDesc">—</div>
+      </div>
+    </div>
+
+    <div class="kp-guide">
+      <span class="kp-pill kp-low">Kp 0–2 — faint, high latitudes only</span>
+      <span class="kp-pill kp-med">Kp 3–4 — moderate, southern visibility</span>
+      <span class="kp-pill kp-high">Kp 5+ — strong storm, wide visibility</span>
+    </div>
+
+    <div class="data-note">
+      Data: NOAA SWPC OVATION aurora model (probability) · Open-Meteo (cloud cover) · Geocoding by Open-Meteo
+    </div>
+  </div>
+
+  <div class="subscribe-card" id="subCard">
+    <div class="sub-header">
+      <div class="sub-icon">&#9993;</div>
+      <div>
+        <h2>Get aurora alerts for tonight</h2>
+        <p>We'll email you when the probability at your location crosses your chosen threshold — so you don't miss a show.</p>
+      </div>
+    </div>
+    <div class="sub-form">
+      <input type="email" id="emailInput" placeholder="your@email.com" />
+      <button class="btn-sub" onclick="subscribe()">Notify me</button>
+    </div>
+    <div class="threshold-row">
+      <label>Alert me when probability exceeds</label>
+      <select id="thresholdSelect">
+        <option value="30">30% — any activity</option>
+        <option value="50" selected>50% — good chance</option>
+        <option value="70">70% — strong activity</option>
+        <option value="90">90% — near certain</option>
+      </select>
+    </div>
+    <div class="success-msg" id="successMsg">&#10003; You're subscribed! We'll alert you when conditions look good at your location.</div>
+  </div>
+</div>
+
+<footer>
+  AuroraWatch &copy; 2026 &nbsp;·&nbsp; Data sourced from NOAA Space Weather Prediction Center &nbsp;·&nbsp; Not affiliated with NOAA
+</footer>
+
+<script>
+const API_BASE = 'http://localhost:3001/api'; // Change to your deployed backend URL
+
+let currentLocation = null;
+
+async function geocode(city) {
+  const r = await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(city) + '&count=1');
+  const d = await r.json();
+  if (!d.results || !d.results.length) throw new Error('City not found');
+  return {
+    lat: d.results[0].latitude,
+    lon: d.results[0].longitude,
+    name: d.results[0].name + (d.results[0].country ? ', ' + d.results[0].country : '')
+  };
+}
+
+async function getCloudCover(lat, lon) {
+  try {
+    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current=cloudcover');
+    const d = await r.json();
+    return d.current && d.current.cloudcover !== undefined ? d.current.cloudcover : null;
+  } catch { return null; }
+}
+
+async function getAuroraProb(lat, lon) {
+  try {
+    const r = await fetch('https://services.swpc.noaa.gov/json/ovation_aurora_latest.json');
+    const d = await r.json();
+    const coords = d.coordinates;
+    if (!coords || !coords.length) return estimateProb(lat);
+    let best = null, bestDist = Infinity;
+    for (const point of coords) {
+      const [plon, plat, prob] = point;
+      const dist = Math.hypot(plat - lat, plon - lon);
+      if (dist < bestDist) { bestDist = dist; best = prob; }
+    }
+    return best !== null ? best : estimateProb(lat);
+  } catch { return estimateProb(lat); }
+}
+
+function estimateProb(lat) {
+  const a = Math.abs(lat);
+  if (a > 70) return Math.round(Math.random() * 35 + 35);
+  if (a > 60) return Math.round(Math.random() * 30 + 10);
+  if (a > 50) return Math.round(Math.random() * 15 + 3);
+  return Math.round(Math.random() * 6 + 1);
+}
+
+function kpFromProb(p) {
+  if (p >= 80) return (6.5 + Math.random() * 1.5).toFixed(1);
+  if (p >= 60) return (5 + Math.random()).toFixed(1);
+  if (p >= 40) return (3.5 + Math.random()).toFixed(1);
+  if (p >= 20) return (2 + Math.random() * 1.5).toFixed(1);
+  return (0.5 + Math.random() * 1.5).toFixed(1);
+}
+
+function renderResult(name, prob, cloud) {
+  document.getElementById('locName').textContent = name;
+
+  const probEl = document.getElementById('probValue');
+  probEl.textContent = Math.round(prob) + '%';
+  probEl.style.color = prob >= 60 ? '#5DCAA5' : prob >= 30 ? '#EF9F27' : '#E24B4A';
+
+  const kp = kpFromProb(prob);
+  document.getElementById('kpValue').textContent = kp;
+
+  const cloudEl = document.getElementById('cloudValue');
+  if (cloud !== null) {
+    cloudEl.textContent = Math.round(cloud) + '%';
+    cloudEl.style.color = cloud < 40 ? '#5DCAA5' : cloud < 70 ? '#EF9F27' : '#E24B4A';
+  } else {
+    cloudEl.textContent = 'N/A';
+  }
+
+  const fill = document.getElementById('gaugeFill');
+  fill.style.width = Math.min(Math.round(prob), 100) + '%';
+  fill.style.background = prob >= 60 ? '#1D9E75' : prob >= 30 ? '#BA7517' : '#E24B4A';
+  document.getElementById('probLabel').textContent = Math.round(prob) + '%';
+
+  const verdict = document.getElementById('verdict');
+  const title = document.getElementById('verdictTitle');
+  const desc = document.getElementById('verdictDesc');
+  verdict.className = 'verdict';
+  const cloudy = cloud !== null && cloud > 70;
+
+  if (prob >= 60 && !cloudy) {
+    verdict.classList.add('good');
+    title.textContent = 'Good conditions — go outside tonight!';
+    desc.textContent = 'Strong geomagnetic activity and clear skies. Head to a dark spot away from city lights for the best view.';
+  } else if (prob >= 60 && cloudy) {
+    verdict.classList.add('medium');
+    title.textContent = 'Strong aurora, but clouds may block the view';
+    desc.textContent = 'Activity is high (Kp ' + kp + '), but ' + Math.round(cloud) + '% cloud cover will likely obscure visibility. Watch for breaks in the cloud.';
+  } else if (prob >= 30) {
+    verdict.classList.add('medium');
+    title.textContent = 'Possible sighting — worth watching';
+    desc.textContent = 'Moderate geomagnetic activity. Best visible from dark, high-latitude locations. Keep an eye on updates throughout the evening.';
+  } else {
+    verdict.classList.add('poor');
+    title.textContent = 'Quiet night — unlikely to see aurora';
+    desc.textContent = 'Low geomagnetic activity at your location. Consider checking locations further north, or wait for the next solar event.';
+  }
+
+  document.getElementById('resultCard').classList.add('show');
+  document.getElementById('subCard').classList.add('show');
+}
+
+async function run(lat, lon, name) {
+  currentLocation = { lat, lon, name };
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('resultCard').classList.remove('show');
+  document.getElementById('subCard').classList.remove('show');
+  try {
+    const r = await fetch(`${API_BASE}/forecast?lat=${lat}&lon=${lon}`);
+    if (!r.ok) throw new Error('API error');
+    const data = await r.json();
+    const { prob, kp, cloud, verdict, verdictDetail } = data;
+
+    document.getElementById('locName').textContent = name;
+    const probEl = document.getElementById('probValue');
+    probEl.textContent = Math.round(prob) + '%';
+    probEl.style.color = prob >= 60 ? '#5DCAA5' : prob >= 30 ? '#EF9F27' : '#E24B4A';
+    document.getElementById('kpValue').textContent = kp !== null ? parseFloat(kp).toFixed(1) : 'N/A';
+    const cloudEl = document.getElementById('cloudValue');
+    if (cloud !== null) {
+      cloudEl.textContent = Math.round(cloud) + '%';
+      cloudEl.style.color = cloud < 40 ? '#5DCAA5' : cloud < 70 ? '#EF9F27' : '#E24B4A';
+    } else { cloudEl.textContent = 'N/A'; }
+    const fill = document.getElementById('gaugeFill');
+    fill.style.width = Math.min(Math.round(prob), 100) + '%';
+    fill.style.background = prob >= 60 ? '#1D9E75' : prob >= 30 ? '#BA7517' : '#E24B4A';
+    document.getElementById('probLabel').textContent = Math.round(prob) + '%';
+    const verdictEl = document.getElementById('verdict');
+    verdictEl.className = 'verdict ' + (verdict || 'poor');
+    document.getElementById('verdictTitle').textContent =
+      verdict === 'good'   ? 'Good conditions — go outside tonight!' :
+      verdict === 'medium' ? 'Possible sighting — worth watching' :
+                             'Quiet night — unlikely to see aurora';
+    document.getElementById('verdictDesc').textContent = verdictDetail || '';
+    document.getElementById('resultCard').classList.add('show');
+    document.getElementById('subCard').classList.add('show');
+  } catch(e) {
+    alert('Could not fetch data. Is the backend running at ' + API_BASE + '?\n\n' + e.message);
+  } finally {
+    document.getElementById('loading').classList.remove('show');
+  }
+}
+
+async function searchLocation() {
+  const q = document.getElementById('locationInput').value.trim();
+  if (!q) return;
+  try {
+    const loc = await geocode(q);
+    await run(loc.lat, loc.lon, loc.name);
+  } catch { alert('City not found. Try a different name.'); }
+}
+
+function useMyLocation() {
+  if (!navigator.geolocation) { alert('Geolocation is not supported by your browser.'); return; }
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const { latitude: lat, longitude: lon } = pos.coords;
+    await run(lat, lon, 'Your location (' + lat.toFixed(2) + '°, ' + lon.toFixed(2) + '°)');
+  }, () => alert('Could not get your location. Please type a city name.'));
+}
+
+async function subscribe() {
+  const email     = document.getElementById('emailInput').value.trim();
+  const threshold = document.getElementById('thresholdSelect').value;
+  if (!email || !email.includes('@')) { alert('Please enter a valid email address.'); return; }
+  if (!currentLocation) { alert('Please search for a location first.'); return; }
+  const btn = document.querySelector('.btn-sub');
+  btn.textContent = 'Subscribing...'; btn.disabled = true;
+  try {
+    const r = await fetch(`${API_BASE}/subscribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, lat: currentLocation.lat, lon: currentLocation.lon, locationName: currentLocation.name, threshold: parseInt(threshold, 10) }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Subscription failed');
+    const msg = document.getElementById('successMsg');
+    msg.textContent = '✓ ' + data.message + ' Check your inbox for a confirmation.';
+    msg.classList.add('show');
+    document.getElementById('emailInput').value = '';
+  } catch(e) {
+    alert('Could not subscribe: ' + e.message);
+  } finally {
+    btn.textContent = 'Notify me'; btn.disabled = false;
+  }
+}
+
+document.getElementById('locationInput').addEventListener('keydown', e => { if (e.key === 'Enter') searchLocation(); });
+</script>
+</body>
+</html>
