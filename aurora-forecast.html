@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AuroraWatch — Will you see the aurora tonight?</title>
+<title>AuroraCheck — Will you see the aurora tonight?</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0c0c1a; color: #fff; min-height: 100vh; }
@@ -304,11 +304,11 @@
 </div>
 
 <footer>
-  AuroraWatch &copy; 2026 &nbsp;·&nbsp; Data sourced from NOAA Space Weather Prediction Center &nbsp;·&nbsp; Not affiliated with NOAA
+  AuroraCheck &copy; 2026 &nbsp;·&nbsp; Data sourced from NOAA Space Weather Prediction Center &nbsp;·&nbsp; Not affiliated with NOAA
 </footer>
 
 <script>
-const API_BASE = 'http://localhost:3001/api'; // Change to your deployed backend URL
+const API_BASE = 'https://api.auroracheck.com/api'; // Change to your deployed backend URL
 
 let currentLocation = null;
 
