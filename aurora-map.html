@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AuroraWatch — Live Map</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500&family=DM+Sans:wght@300;400;500;600&display=swap');
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --green: #00e8a2; --purple: #9b7ff0; --amber: #ffb347; --red: #ff4d6d;
+  --bg: #080c12; --surface: rgba(255,255,255,0.04); --border: rgba(255,255,255,0.09);
+  --text: rgba(255,255,255,0.88); --muted: rgba(255,255,255,0.38);
+  --mono: 'DM Mono', monospace; --sans: 'DM Sans', sans-serif;
+}
+html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); font-family:var(--sans); color:var(--text); }
+
+/* ── Layout ── */
+.shell { display:flex; flex-direction:column; height:100vh; }
+.topbar {
+  flex-shrink:0; display:flex; align-items:center; justify-content:space-between;
+  padding:14px 24px; border-bottom:0.5px solid var(--border);
+  background:rgba(8,12,18,0.95); z-index:20; gap:16px; flex-wrap:wrap;
+}
+.logo { font-family:var(--mono); font-size:14px; font-weight:500; color:var(--green); letter-spacing:.05em; white-space:nowrap; }
+.logo span { color:var(--muted); font-weight:300; }
+.topbar-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+
+.pill {
+  display:flex; align-items:center; gap:7px; background:var(--surface);
+  border:0.5px solid var(--border); border-radius:99px; padding:5px 13px;
+  font-family:var(--mono); font-size:11px; color:var(--muted); white-space:nowrap;
+}
+.dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:blink 2s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.map-area { flex:1; display:flex; min-height:0; position:relative; }
+
+/* ── Map canvas wrapper ── */
+.map-wrap { flex:1; position:relative; overflow:hidden; }
+#map-canvas { width:100%; height:100%; display:block; cursor:crosshair; }
+
+/* ── Sidebar ── */
+.sidebar {
+  width:260px; flex-shrink:0; border-left:0.5px solid var(--border);
+  background:rgba(8,12,18,0.97); display:flex; flex-direction:column;
+  overflow-y:auto; padding:16px; gap:14px;
+}
+
+.card {
+  background:var(--surface); border:0.5px solid var(--border);
+  border-radius:12px; padding:16px;
+}
+.card-label {
+  font-family:var(--mono); font-size:10px; color:var(--muted);
+  letter-spacing:.08em; text-transform:uppercase; margin-bottom:12px;
+}
+
+/* Kp display */
+.kp-big { font-family:var(--mono); font-size:42px; font-weight:500; line-height:1; color:#fff; margin-bottom:4px; }
+.kp-big em { font-size:16px; font-style:normal; color:var(--muted); font-weight:300; }
+.kp-track { height:5px; border-radius:99px; background:rgba(255,255,255,.07); overflow:hidden; margin:10px 0 8px; }
+.kp-fill { height:100%; border-radius:99px; transition:width 1s ease, background 1s ease; }
+.kp-storm-label { font-size:12px; padding:4px 10px; border-radius:99px; display:inline-block; margin-bottom:6px; font-weight:500; }
+.kp-desc { font-size:12px; color:var(--muted); line-height:1.5; }
+
+/* Legend */
+.legend-item { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.legend-item:last-child { margin-bottom:0; }
+.swatch { width:24px; height:10px; border-radius:3px; flex-shrink:0; }
+.legend-text { font-size:12px; color:var(--muted); }
+.legend-text strong { color:var(--text); font-weight:500; }
+
+/* Hover tooltip */
+.tooltip {
+  position:absolute; pointer-events:none; z-index:30;
+  background:rgba(8,12,18,0.95); border:0.5px solid var(--border);
+  border-radius:10px; padding:12px 14px; min-width:160px;
+  transition:opacity .12s; opacity:0; backdrop-filter:blur(8px);
+}
+.tooltip.show { opacity:1; }
+.tt-loc { font-size:12px; color:var(--muted); margin-bottom:4px; font-family:var(--mono); }
+.tt-prob { font-size:26px; font-weight:600; line-height:1; font-family:var(--mono); margin-bottom:2px; }
+.tt-label { font-size:11px; color:var(--muted); }
+
+/* Image overlay controls */
+.overlay-controls { display:flex; flex-direction:column; gap:8px; }
+.opacity-row { display:flex; align-items:center; gap:10px; }
+.opacity-row label { font-size:12px; color:var(--muted); flex:1; }
+.opacity-row input[type=range] { flex:1; }
+.opacity-val { font-family:var(--mono); font-size:11px; color:var(--text); min-width:28px; text-align:right; }
+
+/* Hemisphere tabs */
+.tab-row { display:flex; gap:6px; margin-bottom:0; }
+.tab-btn {
+  flex:1; padding:7px; border-radius:8px; border:0.5px solid var(--border);
+  background:transparent; color:var(--muted); font-family:var(--mono); font-size:11px;
+  cursor:pointer; transition:all .15s;
+}
+.tab-btn.active { background:var(--green); border-color:var(--green); color:#000; font-weight:500; }
+
+/* Back / nav */
+.nav-links { display:flex; gap:8px; }
+.nav-link {
+  font-family:var(--mono); font-size:11px; color:var(--muted); text-decoration:none;
+  background:var(--surface); border:0.5px solid var(--border);
+  border-radius:99px; padding:5px 13px; transition:color .15s, border-color .15s;
+  white-space:nowrap;
+}
+.nav-link:hover { color:var(--green); border-color:rgba(0,232,162,.3); }
+
+/* Refresh spinner */
+.spin { display:inline-block; width:10px; height:10px; border:1.5px solid rgba(0,232,162,.3); border-top-color:var(--green); border-radius:50%; animation:spin .8s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* Loading */
+.map-loading {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  background:var(--bg); z-index:10; flex-direction:column; gap:12px;
+  font-family:var(--mono); font-size:13px; color:var(--muted);
+}
+.map-loading .spin-lg { width:24px; height:24px; border-width:2px; }
+
+@media(max-width:700px) {
+  .sidebar { display:none; }
+  .map-area { flex-direction:column; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="logo">Aurora<span>Watch</span> &mdash; Live Map</div>
+    <div class="topbar-right">
+      <div class="pill"><div class="dot"></div><span id="dataAge">Loading...</span></div>
+      <div class="nav-links">
+        <a class="nav-link" href="aurora-forecast.html">← Forecast</a>
+        <a class="nav-link" href="aurora-admin.html">Admin ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="map-area">
+
+    <!-- Map -->
+    <div class="map-wrap">
+      <div class="map-loading" id="mapLoading">
+        <div class="spin spin-lg"></div>
+        <span>Loading aurora data from NOAA...</span>
+      </div>
+      <canvas id="map-canvas"></canvas>
+      <div class="tooltip" id="tooltip">
+        <div class="tt-loc" id="ttLoc">—</div>
+        <div class="tt-prob" id="ttProb">—%</div>
+        <div class="tt-label">aurora probability</div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+
+      <div class="card">
+        <div class="card-label">Kp index — global</div>
+        <div class="kp-big" id="kpBig">—<em> /9</em></div>
+        <div class="kp-track"><div class="kp-fill" id="kpFill" style="width:0%"></div></div>
+        <span class="kp-storm-label" id="kpStormLabel" style="background:rgba(255,255,255,.07);color:var(--muted)">Quiet</span>
+        <p class="kp-desc" id="kpDesc">Fetching space weather data...</p>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Hemisphere</div>
+        <div class="tab-row">
+          <button class="tab-btn active" id="tabN" onclick="setHemi('N')">North</button>
+          <button class="tab-btn" id="tabS" onclick="setHemi('S')">South</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Aurora overlay</div>
+        <div class="overlay-controls">
+          <div class="opacity-row">
+            <label>Opacity</label>
+            <input type="range" min="20" max="100" value="80" id="opacitySlider" oninput="setOpacity(this.value)" />
+            <span class="opacity-val" id="opacityVal">80%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Intensity scale</div>
+        <div class="legend-item"><div class="swatch" style="background:#ff4d6d"></div><div class="legend-text"><strong>Extreme</strong> — &gt;80%</div></div>
+        <div class="legend-item"><div class="swatch" style="background:#ffb347"></div><div class="legend-text"><strong>High</strong> — 60–80%</div></div>
+        <div class="legend-item"><div class="swatch" style="background:#00e8a2"></div><div class="legend-text"><strong>Moderate</strong> — 30–60%</div></div>
+        <div class="legend-item"><div class="swatch" style="background:#3a7bd5"></div><div class="legend-text"><strong>Low</strong> — 10–30%</div></div>
+        <div class="legend-item"><div class="swatch" style="background:rgba(255,255,255,.1)"></div><div class="legend-text"><strong>None</strong> — &lt;10%</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Data source</div>
+        <p style="font-size:12px;color:var(--muted);line-height:1.6;">
+          Aurora oval: <strong style="color:var(--text)">NOAA OVATION</strong> model.<br>
+          Updated every 5 minutes.<br>
+          Kp: <strong style="color:var(--text)">NOAA SWPC</strong> real-time.
+        </p>
+        <button onclick="refreshAll()" style="margin-top:12px;width:100%;padding:8px;border-radius:8px;border:0.5px solid var(--border);background:transparent;color:var(--muted);font-family:var(--mono);font-size:11px;cursor:pointer;" id="refreshBtn">
+          ↻ Refresh now
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────────
+let hemisphere = 'N';
+let overlayOpacity = 0.80;
+let noaaData = null;    // parsed grid [181][360] probabilities
+let auroraOffscreen = null; // OffscreenCanvas or regular canvas with aurora painted
+const canvas = document.getElementById('map-canvas');
+const ctx    = canvas.getContext('2d');
+
+// ── NOAA image URLs (no CORS issues - these are public images) ─────────────────
+// NOAA publishes PNG aurora oval images directly - no API key, no CORS
+function noaaImageUrl(hemi) {
+  // These are the official NOAA real-time aurora oval images
+  const h = hemi === 'N' ? 'north' : 'south';
+  // Add timestamp to bust cache
+  return `https://services.swpc.noaa.gov/images/animations/ovation/${h}/latest.jpg?_=${Date.now()}`;
+}
+
+function noaaJsonUrl() {
+  return `https://services.swpc.noaa.gov/json/ovation_aurora_latest.json`;
+}
+
+// ── NOAA JSON via backend proxy (to avoid CORS), falls back to image approach ──
+async function fetchNoaaJson() {
+  // Try backend proxy first
+  try {
+    const r = await fetch('http://localhost:3001/api/aurora-grid', { signal: AbortSignal.timeout(4000) });
+    if (r.ok) return await r.json();
+  } catch {}
+
+  // Direct fetch (works if backend proxies it, or NOAA enables CORS)
+  try {
+    const r = await fetch(noaaJsonUrl(), { signal: AbortSignal.timeout(6000) });
+    if (r.ok) {
+      const d = await r.json();
+      return d;
+    }
+  } catch {}
+  return null;
+}
+
+// ── Build aurora canvas from JSON grid ────────────────────────────────────────
+function buildAuroraCanvas(coords, hemi) {
+  const W = 720, H = 360;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const octx = c.getContext('2d');
+  const imgData = octx.createImageData(W, H);
+  const data = imgData.data;
+
+  // Build lookup grid
+  const grid = new Uint8Array(361 * 181);
+  for (const [lon, lat, prob] of coords) {
+    const li = Math.round(((lon % 360) + 360) % 360); // 0..359
+    const ti = Math.round(lat + 90);                   // 0..180
+    if (li >= 0 && li < 360 && ti >= 0 && ti <= 180) {
+      grid[ti * 361 + li] = Math.max(grid[ti * 361 + li], prob);
+    }
+  }
+
+  for (let py = 0; py < H; py++) {
+    for (let px = 0; px < W; px++) {
+      const lon = (px / W) * 360;
+      const lat = 90 - (py / H) * 180;
+      const li  = Math.round(lon) % 360;
+      const ti  = Math.round(lat + 90);
+      const prob = (ti >= 0 && ti <= 180) ? grid[ti * 361 + li] : 0;
+      if (prob < 4) continue;
+
+      const t = prob / 100;
+      const idx = (py * W + px) * 4;
+      let r, g, b, a;
+
+      if (t > 0.80) {        // red/extreme
+        r = 255; g = 60;  b = 80;  a = Math.round(200 + t * 55);
+      } else if (t > 0.60) { // amber
+        r = 255; g = 170; b = 50;  a = Math.round(170 + t * 60);
+      } else if (t > 0.30) { // green
+        r = 0;   g = 220; b = 150; a = Math.round(130 + t * 80);
+      } else {               // blue
+        r = 50;  g = 120; b = 240; a = Math.round(60  + t * 120);
+      }
+      data[idx]=r; data[idx+1]=g; data[idx+2]=b; data[idx+3]=a;
+    }
+  }
+  octx.putImageData(imgData, 0, 0);
+
+  // Soft glow pass
+  const glow = document.createElement('canvas');
+  glow.width = W; glow.height = H;
+  const gctx = glow.getContext('2d');
+  gctx.filter = 'blur(5px)';
+  gctx.drawImage(c, 0, 0);
+  gctx.filter = 'blur(2px)';
+  gctx.globalAlpha = 0.5;
+  gctx.drawImage(c, 0, 0);
+  gctx.filter = 'none';
+  gctx.globalAlpha = 0.85;
+  gctx.drawImage(c, 0, 0);
+
+  return glow;
+}
+
+// ── Draw world map base ────────────────────────────────────────────────────────
+function drawBase() {
+  const W = canvas.width, H = canvas.height;
+  // Background — deep ocean
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#060d1a');
+  grad.addColorStop(1, '#080c12');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 0.5;
+  // Lat lines every 30°
+  for (let lat = -60; lat <= 60; lat += 30) {
+    const y = ((90 - lat) / 180) * H;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  // Lon lines every 60°
+  for (let lon = 0; lon <= 360; lon += 60) {
+    const x = (lon / 360) * W;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+
+  // Equator + prime meridian slightly brighter
+  ctx.strokeStyle = 'rgba(255,255,255,0.09)';
+  ctx.lineWidth = 0.75;
+  const eqY = H / 2;
+  ctx.beginPath(); ctx.moveTo(0, eqY); ctx.lineTo(W, eqY); ctx.stroke();
+  const pmX = W / 2;
+  ctx.beginPath(); ctx.moveTo(pmX, 0); ctx.lineTo(pmX, H); ctx.stroke();
+
+  // Polar circles (66.5°)
+  ctx.strokeStyle = 'rgba(0,232,162,0.12)';
+  ctx.setLineDash([4, 6]);
+  const arcticY  = ((90 - 66.5) / 180) * H;
+  const antarcY  = ((90 + 66.5) / 180) * H;
+  ctx.beginPath(); ctx.moveTo(0, arcticY); ctx.lineTo(W, arcticY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, antarcY); ctx.lineTo(W, antarcY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Labels
+  ctx.font = '10px DM Mono, monospace';
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.fillText('66.5°N', 4, arcticY - 4);
+  ctx.fillText('66.5°S', 4, antarcY - 4);
+  ctx.fillText('EQ', 4, eqY - 4);
+}
+
+// ── Draw aurora overlay ────────────────────────────────────────────────────────
+function drawAurora() {
+  if (!auroraOffscreen) return;
+  const W = canvas.width, H = canvas.height;
+  ctx.save();
+  ctx.globalAlpha = overlayOpacity;
+  ctx.globalCompositeOperation = 'screen';
+  ctx.drawImage(auroraOffscreen, 0, 0, W, H);
+  ctx.restore();
+}
+
+// ── Draw labels ───────────────────────────────────────────────────────────────
+function drawLabels() {
+  const W = canvas.width, H = canvas.height;
+  ctx.font = '11px DM Mono, monospace';
+  ctx.fillStyle = 'rgba(255,255,255,0.22)';
+  const lons = [[-180,'180°W'],[−120,'120°W'],[-60,'60°W'],[0,'0°'],[60,'60°E'],[120,'120°E'],[179,'180°E']];
+  for (const [lon, lbl] of lons) {
+    const x = ((lon + 180) / 360) * W;
+    ctx.fillText(lbl, x + 2, H - 5);
+  }
+  const lats = [[75,'75°N'],[45,'45°N'],[15,'15°N'],[-15,'15°S'],[-45,'45°S'],[-75,'75°S']];
+  for (const [lat, lbl] of lats) {
+    const y = ((90 - lat) / 180) * H;
+    ctx.fillText(lbl, 4, y + 4);
+  }
+}
+
+// ── Full redraw ────────────────────────────────────────────────────────────────
+function redraw() {
+  resize();
+  drawBase();
+  drawAurora();
+  drawLabels();
+}
+
+// ── Hover: prob lookup ────────────────────────────────────────────────────────
+function probAtPixel(px, py) {
+  if (!noaaData) return 0;
+  const lon = (px / canvas.width)  * 360 - 180;
+  const lat = 90 - (py / canvas.height) * 180;
+  // Find nearest in noaaData.coords
+  const li = Math.round(((lon % 360) + 360) % 360);
+  const ti = Math.round(lat + 90);
+  if (ti < 0 || ti > 180 || li < 0 || li >= 360) return 0;
+  return noaaData.grid[ti * 361 + li] || 0;
+}
+
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const px = (e.clientX - rect.left) * (canvas.width  / rect.width);
+  const py = (e.clientY - rect.top)  * (canvas.height / rect.height);
+  const lon = (px / canvas.width)  * 360 - 180;
+  const lat = 90 - (py / canvas.height) * 180;
+  const prob = probAtPixel(px, py);
+
+  const color = prob >= 80 ? '#ff4d6d' : prob >= 60 ? '#ffb347' : prob >= 30 ? '#00e8a2' : '#3a7bd5';
+  document.getElementById('ttProb').textContent = Math.round(prob) + '%';
+  document.getElementById('ttProb').style.color = color;
+  document.getElementById('ttLoc').textContent =
+    Math.abs(lat).toFixed(1) + '° ' + (lat >= 0 ? 'N' : 'S') + ', ' +
+    Math.abs(lon).toFixed(1) + '° ' + (lon >= 0 ? 'E' : 'W');
+
+  const tt = document.getElementById('tooltip');
+  tt.style.left = (e.clientX + 16) + 'px';
+  tt.style.top  = (e.clientY - 16) + 'px';
+  tt.classList.add('show');
+});
+canvas.addEventListener('mouseleave', () => document.getElementById('tooltip').classList.remove('show'));
+
+// ── Resize canvas ─────────────────────────────────────────────────────────────
+function resize() {
+  const wrap = canvas.parentElement;
+  canvas.width  = wrap.clientWidth;
+  canvas.height = wrap.clientHeight;
+}
+
+// ── Kp panel ──────────────────────────────────────────────────────────────────
+async function fetchKp() {
+  try {
+    const r = await fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json', { signal: AbortSignal.timeout(6000) });
+    const d = await r.json();
+    if (d.length < 2) return null;
+    return parseFloat(d[d.length - 1][1]);
+  } catch { return null; }
+}
+
+function updateKpPanel(kp) {
+  if (kp === null) return;
+  document.getElementById('kpBig').innerHTML = kp.toFixed(1) + '<em> /9</em>';
+  document.getElementById('kpFill').style.width = ((kp / 9) * 100) + '%';
+
+  let color, storm, desc;
+  if (kp >= 8)      { color='#ff4d6d'; storm='G4–G5 Extreme'; desc='Severe geomagnetic storm. Aurora visible at very low latitudes, even mid-latitudes.' }
+  else if (kp >= 6) { color='#ff8c42'; storm='G2–G3 Strong';  desc='Strong storm. Aurora visible from northern Europe, Canada, northern US states.' }
+  else if (kp >= 5) { color='#ffb347'; storm='G1 Storm';      desc='Geomagnetic storm. Good aurora visibility at high latitudes.' }
+  else if (kp >= 4) { color='#9b7ff0'; storm='Active';        desc='Active conditions. Aurora visible from Scandinavia, Iceland, northern Canada.' }
+  else if (kp >= 2) { color='#3a7bd5'; storm='Unsettled';     desc='Quiet to unsettled. Aurora mostly confined to polar regions above 65°.' }
+  else              { color='rgba(255,255,255,.2)'; storm='Quiet'; desc='Very quiet. Aurora only at the polar cap. Unlikely to be seen.' }
+
+  document.getElementById('kpFill').style.background = color;
+  const lbl = document.getElementById('kpStormLabel');
+  lbl.textContent = storm;
+  lbl.style.background = color + '22';
+  lbl.style.color = color;
+  lbl.style.border = `0.5px solid ${color}44`;
+  document.getElementById('kpDesc').textContent = desc;
+}
+
+// ── Hemisphere switch ─────────────────────────────────────────────────────────
+function setHemi(h) {
+  hemisphere = h;
+  document.getElementById('tabN').classList.toggle('active', h === 'N');
+  document.getElementById('tabS').classList.toggle('active', h === 'S');
+  loadAuroraImage();
+}
+
+// ── Opacity ───────────────────────────────────────────────────────────────────
+function setOpacity(val) {
+  overlayOpacity = val / 100;
+  document.getElementById('opacityVal').textContent = val + '%';
+  redraw();
+}
+
+// ── Load NOAA aurora image ────────────────────────────────────────────────────
+// Strategy: Try JSON first (for pixel-level hover data),
+// then always load the official NOAA PNG for display (no CORS block on images)
+async function loadAuroraData() {
+  const raw = await fetchNoaaJson();
+  if (raw && raw.coordinates && raw.coordinates.length) {
+    // Build fast grid
+    const grid = new Uint8Array(361 * 181);
+    for (const [lon, lat, prob] of raw.coordinates) {
+      const li = Math.round(((lon % 360) + 360) % 360);
+      const ti = Math.round(lat + 90);
+      if (ti >= 0 && ti <= 180 && li >= 0 && li < 360) {
+        grid[ti * 361 + li] = Math.max(grid[ti * 361 + li], prob);
+      }
+    }
+    noaaData = { grid, coords: raw.coordinates };
+
+    const ts = raw['Forecast Time'] || raw.Forecast_Time || '';
+    if (ts) {
+      const dt = new Date(ts);
+      document.getElementById('dataAge').textContent = 'NOAA · ' + dt.toUTCString().slice(5, 22) + ' UTC';
+    } else {
+      document.getElementById('dataAge').textContent = 'NOAA OVATION · live';
+    }
+    return buildAuroraCanvas(raw.coordinates, hemisphere);
+  }
+  return null;
+}
+
+async function loadAuroraImage() {
+  // Always use NOAA's official PNG - zero CORS issues since browsers load images cross-origin freely
+  return new Promise(resolve => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth || 1800;
+      c.height = img.naturalHeight || 1800;
+      const ictx = c.getContext('2d');
+      ictx.drawImage(img, 0, 0);
+      auroraOffscreen = c;
+      redraw();
+      document.getElementById('mapLoading').style.display = 'none';
+      resolve(c);
+    };
+
+    img.onerror = () => {
+      // Fallback: generate realistic synthetic aurora if image fails
+      auroraOffscreen = buildSyntheticAurora(hemisphere);
+      redraw();
+      document.getElementById('mapLoading').style.display = 'none';
+      document.getElementById('dataAge').textContent = 'NOAA offline — synthetic data';
+      resolve(null);
+    };
+
+    // NOAA's real-time aurora oval image
+    const h = hemisphere === 'N' ? 'north' : 'south';
+    img.src = `https://services.swpc.noaa.gov/images/animations/ovation/${h}/latest.jpg`;
+  });
+}
+
+// ── Synthetic fallback aurora (realistic polar oval) ──────────────────────────
+function buildSyntheticAurora(hemi) {
+  const W = 720, H = 360;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const sctx = c.getContext('2d');
+  const imgData = sctx.createImageData(W, H);
+  const d = imgData.data;
+
+  // Aurora oval centred around geomagnetic pole (~80°N, 110°W for north)
+  const poleLat = hemi === 'N' ? 80 : -80;
+  const poleLon = hemi === 'N' ? -110 : 140;
+  const ovalRadius = 23;  // degrees
+  const ovalWidth  = 8;   // degrees half-width
+
+  for (let py = 0; py < H; py++) {
+    for (let px = 0; px < W; px++) {
+      const lon = (px / W) * 360 - 180;
+      const lat = 90 - (py / H) * 180;
+
+      // Angular distance from geomagnetic pole
+      const φ1 = lat * Math.PI / 180;
+      const φ2 = poleLat * Math.PI / 180;
+      const Δλ = (lon - poleLon) * Math.PI / 180;
+      const dist = Math.acos(
+        Math.sin(φ1)*Math.sin(φ2) + Math.cos(φ1)*Math.cos(φ2)*Math.cos(Δλ)
+      ) * 180 / Math.PI;
+
+      const diff = Math.abs(dist - ovalRadius);
+      if (diff > ovalWidth * 2) continue;
+
+      const strength = Math.max(0, 1 - diff / ovalWidth);
+      const prob = strength * 65;
+      if (prob < 5) continue;
+      const t = prob / 100;
+
+      // Vary intensity around the oval (brighter on night side)
+      const lonFactor = 0.7 + 0.3 * Math.sin((lon - poleLon) * Math.PI / 180 + Math.PI);
+      const finalProb = Math.min(1, t * lonFactor);
+
+      const idx = (py * W + px) * 4;
+      if (finalProb > 0.6)      { d[idx]=0; d[idx+1]=220; d[idx+2]=150; d[idx+3]=Math.round(160*finalProb); }
+      else if (finalProb > 0.3) { d[idx]=100; d[idx+1]=80; d[idx+2]=240; d[idx+3]=Math.round(120*finalProb); }
+      else                      { d[idx]=40; d[idx+1]=80; d[idx+2]=200; d[idx+3]=Math.round(80*finalProb); }
+    }
+  }
+  sctx.putImageData(imgData, 0, 0);
+
+  const glow = document.createElement('canvas');
+  glow.width = W; glow.height = H;
+  const gc = glow.getContext('2d');
+  gc.filter = 'blur(6px)'; gc.drawImage(c, 0, 0);
+  gc.filter = 'blur(2px)'; gc.globalAlpha = 0.6; gc.drawImage(c, 0, 0);
+  gc.filter = 'none';      gc.globalAlpha = 0.8; gc.drawImage(c, 0, 0);
+  return glow;
+}
+
+// ── Refresh all ───────────────────────────────────────────────────────────────
+let refreshing = false;
+async function refreshAll() {
+  if (refreshing) return;
+  refreshing = true;
+  const btn = document.getElementById('refreshBtn');
+  btn.innerHTML = '<span class="spin" style="display:inline-block;width:10px;height:10px;border:1.5px solid rgba(0,232,162,.3);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle"></span> Refreshing...';
+
+  try {
+    // Try JSON data for hover, then load official image
+    const [jsonCanvas, kp] = await Promise.all([loadAuroraData(), fetchKp()]);
+    if (jsonCanvas) auroraOffscreen = jsonCanvas;
+    else await loadAuroraImage();
+    if (kp !== null) updateKpPanel(kp);
+    redraw();
+  } catch {}
+
+  btn.textContent = '↻ Refresh now';
+  refreshing = false;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(async () => {
+  resize();
+  drawBase();
+
+  // Parallel: load aurora image + KP
+  const [, kp] = await Promise.all([
+    // Try JSON first, fallback to official NOAA image
+    loadAuroraData().then(async jsonCanvas => {
+      if (jsonCanvas) {
+        auroraOffscreen = jsonCanvas;
+        redraw();
+        document.getElementById('mapLoading').style.display = 'none';
+      } else {
+        await loadAuroraImage();
+      }
+    }),
+    fetchKp()
+  ]);
+
+  if (kp !== null) updateKpPanel(kp);
+
+  // Auto-refresh every 5 min
+  setInterval(refreshAll, 5 * 60 * 1000);
+})();
+
+window.addEventListener('resize', redraw);
+</script>
+</body>
+</html>
