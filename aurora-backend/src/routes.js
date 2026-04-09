@@ -1,6 +1,6 @@
 /**
  * routes.js
- * REST API endpoints for the AuroraWatch backend.
+ * REST API endpoints for the AuroraCheck backend.
  *
  * POST /api/subscribe         — add a new subscriber
  * DELETE /api/unsubscribe     — remove subscriber by token
