@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AuroraWatch — Admin</title>
+<title>AuroraCheck — Admin</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -265,7 +265,7 @@ tr:hover td { background:rgba(255,255,255,.02); }
     <div class="page active" id="page-dashboard">
       <div class="page-header">
         <div class="page-title">Dashboard</div>
-        <div class="page-sub">Real-time overview of AuroraWatch</div>
+        <div class="page-sub">Real-time overview of AuroraCheck</div>
       </div>
 
       <div class="stats-grid">
@@ -429,7 +429,7 @@ tr:hover td { background:rgba(255,255,255,.02); }
 
 <script>
 // ── Config ────────────────────────────────────────────────────────────────────
-const API = 'http://localhost:3001/api';
+const API = 'https://api.auroracheck.com/api';
 let adminSecret = '';
 
 // ── Sample data (used in demo mode / when backend is offline) ─────────────────
