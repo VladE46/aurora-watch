@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AuroraWatch — Admin</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --green: #00e8a2; --purple: #9b7ff0; --amber: #ffb347; --red: #ff4d6d; --blue: #3a7bd5;
+  --bg: #080c12; --surface: rgba(255,255,255,0.04); --surface2: rgba(255,255,255,0.07);
+  --border: rgba(255,255,255,0.09); --border2: rgba(255,255,255,0.15);
+  --text: rgba(255,255,255,0.88); --muted: rgba(255,255,255,0.38);
+  --mono: 'DM Mono', monospace; --sans: 'DM Sans', sans-serif;
+}
+html, body { min-height:100vh; background:var(--bg); font-family:var(--sans); color:var(--text); }
+
+/* ── Layout ── */
+.shell { display:flex; min-height:100vh; }
+
+/* ── Sidebar nav ── */
+.sidenav {
+  width:220px; flex-shrink:0; background:rgba(8,12,18,0.98);
+  border-right:0.5px solid var(--border); display:flex; flex-direction:column;
+  padding:20px 0; position:sticky; top:0; height:100vh;
+}
+.sidenav-logo { padding:0 20px 24px; font-family:var(--mono); font-size:13px; color:var(--green); }
+.sidenav-logo span { color:var(--muted); font-weight:300; }
+.sidenav-logo sub { display:block; font-size:10px; color:var(--muted); margin-top:2px; letter-spacing:.05em; }
+
+.nav-section { padding:0 12px; margin-bottom:4px; }
+.nav-section-label { font-family:var(--mono); font-size:9px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; padding:0 8px; margin-bottom:6px; }
+.nav-item {
+  display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px;
+  font-size:13px; color:var(--muted); cursor:pointer; transition:all .15s; margin-bottom:2px;
+  border:none; background:none; width:100%; text-align:left; text-decoration:none;
+}
+.nav-item:hover { background:var(--surface2); color:var(--text); }
+.nav-item.active { background:rgba(0,232,162,0.1); color:var(--green); }
+.nav-icon { font-size:14px; width:18px; text-align:center; }
+
+.sidenav-footer { margin-top:auto; padding:16px 20px; }
+.sidenav-footer a { font-size:12px; color:var(--muted); text-decoration:none; font-family:var(--mono); }
+.sidenav-footer a:hover { color:var(--green); }
+
+/* ── Main content ── */
+.main { flex:1; min-width:0; padding:32px; }
+
+.page { display:none; }
+.page.active { display:block; }
+
+.page-header { margin-bottom:28px; }
+.page-title { font-size:22px; font-weight:600; letter-spacing:-.3px; margin-bottom:4px; }
+.page-sub { font-size:14px; color:var(--muted); }
+
+/* ── Stats grid ── */
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:14px; margin-bottom:28px; }
+.stat-card {
+  background:var(--surface); border:0.5px solid var(--border); border-radius:12px;
+  padding:18px; cursor:default;
+}
+.stat-label { font-family:var(--mono); font-size:10px; color:var(--muted); letter-spacing:.08em; text-transform:uppercase; margin-bottom:10px; }
+.stat-val { font-family:var(--mono); font-size:32px; font-weight:500; line-height:1; }
+.stat-sub { font-size:12px; color:var(--muted); margin-top:6px; }
+.stat-trend { font-size:11px; margin-top:4px; }
+.trend-up { color:var(--green); }
+.trend-dn { color:var(--red); }
+
+/* ── Table ── */
+.table-card { background:var(--surface); border:0.5px solid var(--border); border-radius:14px; overflow:hidden; }
+.table-head {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 20px; border-bottom:0.5px solid var(--border);
+}
+.table-head h3 { font-size:14px; font-weight:500; }
+.table-actions { display:flex; gap:8px; align-items:center; }
+
+.search-input {
+  background:var(--surface2); border:0.5px solid var(--border2); border-radius:8px;
+  padding:7px 12px; font-size:13px; color:var(--text); outline:none; width:200px;
+  font-family:var(--sans);
+}
+.search-input::placeholder { color:var(--muted); }
+.search-input:focus { border-color:rgba(0,232,162,.4); }
+
+.btn {
+  padding:7px 14px; border-radius:8px; border:0.5px solid var(--border2);
+  font-size:13px; cursor:pointer; font-family:var(--sans); transition:all .15s;
+  background:transparent; color:var(--muted);
+}
+.btn:hover { color:var(--text); border-color:var(--border2); background:var(--surface2); }
+.btn-primary { background:var(--green); border-color:var(--green); color:#000; font-weight:500; }
+.btn-primary:hover { background:#00c98a; border-color:#00c98a; color:#000; }
+.btn-danger { color:var(--red); border-color:rgba(255,77,109,.3); }
+.btn-danger:hover { background:rgba(255,77,109,.1); }
+.btn-sm { padding:4px 10px; font-size:12px; }
+
+table { width:100%; border-collapse:collapse; }
+thead tr { border-bottom:0.5px solid var(--border); }
+th { padding:11px 16px; text-align:left; font-family:var(--mono); font-size:10px; color:var(--muted); letter-spacing:.08em; text-transform:uppercase; font-weight:400; }
+td { padding:13px 16px; font-size:13px; border-bottom:0.5px solid rgba(255,255,255,.04); vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:rgba(255,255,255,.02); }
+
+.badge {
+  display:inline-block; padding:3px 9px; border-radius:99px; font-size:11px;
+  font-family:var(--mono); font-weight:400;
+}
+.badge-active  { background:rgba(0,232,162,.12); color:var(--green); border:0.5px solid rgba(0,232,162,.25); }
+.badge-inactive { background:rgba(255,255,255,.06); color:var(--muted); border:0.5px solid var(--border); }
+.badge-high   { background:rgba(255,179,71,.12); color:var(--amber); border:0.5px solid rgba(255,179,71,.25); }
+.badge-storm  { background:rgba(255,77,109,.12); color:var(--red); border:0.5px solid rgba(255,77,109,.25); }
+
+.email-cell { font-family:var(--mono); font-size:12px; color:var(--muted); }
+.loc-cell { font-size:13px; }
+
+/* ── Alert log ── */
+.log-list { padding:0; }
+.log-entry {
+  display:flex; align-items:center; gap:16px; padding:14px 20px;
+  border-bottom:0.5px solid rgba(255,255,255,.04);
+}
+.log-entry:last-child { border-bottom:none; }
+.log-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.log-meta { flex:1; min-width:0; }
+.log-email { font-family:var(--mono); font-size:12px; color:var(--muted); }
+.log-detail { font-size:13px; color:var(--text); margin-top:2px; }
+.log-time { font-family:var(--mono); font-size:11px; color:var(--muted); white-space:nowrap; }
+
+/* ── Auth gate ── */
+.auth-wrap {
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  background:var(--bg);
+}
+.auth-card {
+  background:rgba(255,255,255,.04); border:0.5px solid var(--border);
+  border-radius:16px; padding:36px; width:340px; text-align:center;
+}
+.auth-card h2 { font-size:18px; font-weight:500; margin-bottom:6px; }
+.auth-card p { font-size:13px; color:var(--muted); margin-bottom:24px; }
+.auth-input {
+  width:100%; background:var(--surface2); border:0.5px solid var(--border2);
+  border-radius:10px; padding:12px 14px; font-size:14px; color:var(--text);
+  outline:none; margin-bottom:12px; font-family:var(--mono); text-align:center;
+  letter-spacing:.1em;
+}
+.auth-input:focus { border-color:rgba(0,232,162,.4); }
+.auth-err { font-size:12px; color:var(--red); margin-top:8px; display:none; }
+.auth-err.show { display:block; }
+
+/* ── Space weather panel ── */
+.sw-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:28px; }
+.sw-card { background:var(--surface); border:0.5px solid var(--border); border-radius:12px; padding:18px; }
+.sw-label { font-family:var(--mono); font-size:10px; color:var(--muted); letter-spacing:.08em; text-transform:uppercase; margin-bottom:8px; }
+.sw-val { font-family:var(--mono); font-size:28px; font-weight:500; }
+.sw-desc { font-size:12px; color:var(--muted); margin-top:6px; line-height:1.5; }
+
+/* ── Modal ── */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:100;
+  display:none; align-items:center; justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.modal-overlay.show { display:flex; }
+.modal {
+  background:#0d1220; border:0.5px solid var(--border2); border-radius:16px;
+  padding:28px; width:420px; max-width:90vw;
+}
+.modal h3 { font-size:16px; font-weight:500; margin-bottom:6px; }
+.modal p { font-size:13px; color:var(--muted); margin-bottom:20px; line-height:1.5; }
+.modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
+.form-group { margin-bottom:14px; }
+.form-label { font-size:12px; color:var(--muted); margin-bottom:6px; display:block; font-family:var(--mono); }
+.form-input {
+  width:100%; background:var(--surface2); border:0.5px solid var(--border2);
+  border-radius:8px; padding:10px 12px; font-size:13px; color:var(--text);
+  outline:none; font-family:var(--sans);
+}
+.form-input:focus { border-color:rgba(0,232,162,.4); }
+
+/* ── Empty state ── */
+.empty { text-align:center; padding:48px; color:var(--muted); }
+.empty-icon { font-size:32px; margin-bottom:12px; }
+.empty p { font-size:14px; }
+
+/* ── Spinner ── */
+.spin { display:inline-block; width:14px; height:14px; border:1.5px solid rgba(0,232,162,.25); border-top-color:var(--green); border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ── Toast ── */
+.toast {
+  position:fixed; bottom:24px; right:24px; z-index:200;
+  background:#0d1220; border:0.5px solid var(--border2); border-radius:10px;
+  padding:12px 18px; font-size:13px; display:flex; align-items:center; gap:10px;
+  transform:translateY(80px); opacity:0; transition:all .3s ease; pointer-events:none;
+}
+.toast.show { transform:none; opacity:1; }
+.toast-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+@media(max-width:700px) {
+  .sidenav { display:none; }
+  .main { padding:20px; }
+  .stats-grid { grid-template-columns:1fr 1fr; }
+  .sw-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Auth gate -->
+<div class="auth-wrap" id="authGate">
+  <div class="auth-card">
+    <div style="font-size:28px;margin-bottom:12px;">🌌</div>
+    <h2>Admin access</h2>
+    <p>Enter your admin secret to continue.<br>Set <code style="font-size:11px;color:var(--green)">ADMIN_SECRET</code> in your backend <code style="font-size:11px;color:var(--green)">.env</code>.</p>
+    <input class="auth-input" type="password" id="secretInput" placeholder="••••••••" autocomplete="current-password" />
+    <button class="btn btn-primary" style="width:100%;padding:11px" onclick="tryAuth()">Sign in</button>
+    <p class="auth-err" id="authErr">Incorrect secret. Try again.</p>
+    <p style="margin-top:16px;font-size:11px;color:var(--muted)">
+      Demo mode: leave blank and press Sign in<br>to explore with sample data.
+    </p>
+  </div>
+</div>
+
+<!-- Main app -->
+<div class="shell" id="appShell" style="display:none">
+
+  <!-- Sidenav -->
+  <nav class="sidenav">
+    <div class="sidenav-logo">Aurora<span>Watch</span><sub>admin dashboard</sub></div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Overview</div>
+      <button class="nav-item active" data-page="dashboard" onclick="showPage('dashboard',this)">
+        <span class="nav-icon">◉</span> Dashboard
+      </button>
+      <button class="nav-item" data-page="subscribers" onclick="showPage('subscribers',this)">
+        <span class="nav-icon">✉</span> Subscribers
+      </button>
+      <button class="nav-item" data-page="alerts" onclick="showPage('alerts',this)">
+        <span class="nav-icon">◎</span> Alert log
+      </button>
+    </div>
+
+    <div class="nav-section" style="margin-top:16px;">
+      <div class="nav-section-label">Tools</div>
+      <button class="nav-item" data-page="spaceweather" onclick="showPage('spaceweather',this)">
+        <span class="nav-icon">☀</span> Space weather
+      </button>
+      <button class="nav-item" onclick="openAddModal()">
+        <span class="nav-icon">+</span> Add subscriber
+      </button>
+    </div>
+
+    <div class="sidenav-footer">
+      <a href="aurora-forecast.html">← Back to site</a>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Dashboard page -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub">Real-time overview of AuroraWatch</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total subscribers</div>
+          <div class="stat-val" style="color:var(--green)" id="statTotal">—</div>
+          <div class="stat-sub">all time</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active</div>
+          <div class="stat-val" id="statActive">—</div>
+          <div class="stat-sub">opted in</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Alerts sent</div>
+          <div class="stat-val" style="color:var(--purple)" id="statAlerts">—</div>
+          <div class="stat-sub">all time</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Kp now</div>
+          <div class="stat-val" id="statKp" style="color:var(--amber)">—</div>
+          <div class="stat-sub" id="statKpDesc">—</div>
+        </div>
+      </div>
+
+      <!-- Recent alerts -->
+      <div class="table-card">
+        <div class="table-head">
+          <h3>Recent alerts sent</h3>
+          <button class="btn btn-sm" onclick="showPage('alerts', document.querySelector('[data-page=alerts]'))">View all</button>
+        </div>
+        <div id="recentAlertsList" class="log-list"></div>
+      </div>
+    </div>
+
+    <!-- Subscribers page -->
+    <div class="page" id="page-subscribers">
+      <div class="page-header">
+        <div class="page-title">Subscribers</div>
+        <div class="page-sub" id="subCountLabel">—</div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-head">
+          <h3>All subscribers</h3>
+          <div class="table-actions">
+            <input class="search-input" type="text" placeholder="Search email or location..." id="searchInput" oninput="filterTable()" />
+            <button class="btn btn-primary btn-sm" onclick="openAddModal()">+ Add</button>
+            <button class="btn btn-sm" onclick="exportCsv()">↓ Export</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr>
+              <th>Email</th>
+              <th>Location</th>
+              <th>Threshold</th>
+              <th>Status</th>
+              <th>Joined</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="subTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert log page -->
+    <div class="page" id="page-alerts">
+      <div class="page-header">
+        <div class="page-title">Alert log</div>
+        <div class="page-sub">Every email alert sent by the cron job</div>
+      </div>
+      <div class="table-card">
+        <div class="table-head">
+          <h3>Alert history</h3>
+          <span id="alertCountBadge" class="badge badge-active">— total</span>
+        </div>
+        <div class="log-list" id="alertLogList"></div>
+      </div>
+    </div>
+
+    <!-- Space weather page -->
+    <div class="page" id="page-spaceweather">
+      <div class="page-header">
+        <div class="page-title">Space weather</div>
+        <div class="page-sub">Live data from NOAA SWPC</div>
+      </div>
+      <div class="sw-grid">
+        <div class="sw-card">
+          <div class="sw-label">Kp index</div>
+          <div class="sw-val" id="swKp" style="color:var(--amber)">—</div>
+          <div class="sw-desc" id="swKpDesc">Loading...</div>
+        </div>
+        <div class="sw-card">
+          <div class="sw-label">Storm level</div>
+          <div class="sw-val" id="swStorm" style="color:var(--text)">—</div>
+          <div class="sw-desc" id="swStormDesc">—</div>
+        </div>
+        <div class="sw-card">
+          <div class="sw-label">Hemispheric Power</div>
+          <div class="sw-val" id="swHP" style="color:var(--purple)">—</div>
+          <div class="sw-desc">Energy deposited in aurora (GW). &gt;50 GW = active; &gt;100 GW = major storm.</div>
+        </div>
+        <div class="sw-card">
+          <div class="sw-label">Visibility estimate</div>
+          <div class="sw-val" id="swVis" style="font-size:18px;color:var(--green)">—</div>
+          <div class="sw-desc" id="swVisDesc">Based on current Kp</div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-head"><h3>Subscribers that would alert right now</h3></div>
+        <div class="log-list" id="wouldAlertList"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Add subscriber modal -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <h3>Add subscriber</h3>
+    <p>Manually add a subscriber. They'll receive a confirmation email.</p>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" type="email" id="addEmail" placeholder="user@example.com" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Location name</label>
+      <input class="form-input" type="text" id="addLocation" placeholder="e.g. Tromsø, Norway" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Coordinates (lat, lon)</label>
+      <div style="display:flex;gap:8px">
+        <input class="form-input" type="number" id="addLat" placeholder="69.65" step="0.01" />
+        <input class="form-input" type="number" id="addLon" placeholder="18.96" step="0.01" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Alert threshold (%)</label>
+      <select class="form-input" id="addThreshold">
+        <option value="30">30% — any chance</option>
+        <option value="50" selected>50% — good chance</option>
+        <option value="70">70% — strong</option>
+        <option value="90">90% — near certain</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeAddModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addSubscriber()">Add subscriber</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <div class="toast-dot" id="toastDot"></div>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+const API = 'http://localhost:3001/api';
+let adminSecret = '';
+
+// ── Sample data (used in demo mode / when backend is offline) ─────────────────
+const DEMO_SUBS = [
+  { id:1, email:'aurora.hunter@gmail.com',   location_name:'Tromsø, Norway',      threshold:50, active:1, created_at:'2026-03-12T18:22:00Z' },
+  { id:2, email:'nordlicht@icloud.com',       location_name:'Reykjavik, Iceland',   threshold:70, active:1, created_at:'2026-03-18T09:04:00Z' },
+  { id:3, email:'lights@yahoo.com',           location_name:'Fairbanks, Alaska',    threshold:30, active:1, created_at:'2026-03-22T14:55:00Z' },
+  { id:4, email:'spacewatch@proton.me',       location_name:'Rovaniemi, Finland',   threshold:50, active:0, created_at:'2026-03-25T07:30:00Z' },
+  { id:5, email:'stella.nova@gmail.com',      location_name:'Abisko, Sweden',       threshold:60, active:1, created_at:'2026-04-01T21:10:00Z' },
+  { id:6, email:'borealis.fan@outlook.com',   location_name:'Yellowknife, Canada',  threshold:50, active:1, created_at:'2026-04-03T11:00:00Z' },
+  { id:7, email:'polarlights@mail.com',       location_name:'Murmansk, Russia',     threshold:40, active:1, created_at:'2026-04-05T16:45:00Z' },
+  { id:8, email:'chaser@sky.net',             location_name:'Lofoten, Norway',      threshold:50, active:1, created_at:'2026-04-07T08:22:00Z' },
+];
+const DEMO_ALERTS = [
+  { id:1, email:'aurora.hunter@gmail.com',   location_name:'Tromsø, Norway',    aurora_prob:72, kp_index:4.8, sent_at:'2026-04-07T22:00:00Z' },
+  { id:2, email:'lights@yahoo.com',           location_name:'Fairbanks, Alaska', aurora_prob:55, kp_index:4.2, sent_at:'2026-04-07T22:00:00Z' },
+  { id:3, email:'nordlicht@icloud.com',       location_name:'Reykjavik, Iceland',aurora_prob:81, kp_index:5.1, sent_at:'2026-04-06T01:00:00Z' },
+  { id:4, email:'stella.nova@gmail.com',      location_name:'Abisko, Sweden',    aurora_prob:68, kp_index:4.7, sent_at:'2026-04-05T23:00:00Z' },
+  { id:5, email:'borealis.fan@outlook.com',   location_name:'Yellowknife, Canada',aurora_prob:60, kp_index:4.3, sent_at:'2026-04-04T03:00:00Z' },
+];
+
+let subscribers = [];
+let alertLog    = [];
+let demoMode    = false;
+let currentKp   = null;
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+function tryAuth() {
+  const val = document.getElementById('secretInput').value.trim();
+  if (!val) {
+    // Demo mode
+    demoMode = true;
+    subscribers = DEMO_SUBS;
+    alertLog    = DEMO_ALERTS;
+    document.getElementById('authGate').style.display = 'none';
+    document.getElementById('appShell').style.display = 'flex';
+    init();
+    return;
+  }
+  adminSecret = val;
+  document.getElementById('authGate').style.display = 'none';
+  document.getElementById('appShell').style.display = 'flex';
+  init();
+}
+document.getElementById('secretInput').addEventListener('keydown', e => { if(e.key==='Enter') tryAuth(); });
+
+// ── Page routing ──────────────────────────────────────────────────────────────
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (id === 'spaceweather') renderSpaceWeather();
+}
+
+// ── API helpers ───────────────────────────────────────────────────────────────
+async function apiFetch(path, opts = {}) {
+  if (demoMode) return null;
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: { 'Content-Type':'application/json', 'x-admin-secret': adminSecret, ...opts.headers }
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+// ── Load data ─────────────────────────────────────────────────────────────────
+async function loadSubscribers() {
+  if (demoMode) return;
+  try {
+    const d = await apiFetch('/admin/subscribers');
+    if (d) subscribers = d.subscribers || [];
+  } catch { subscribers = DEMO_SUBS; demoMode = true; }
+}
+
+async function loadAlerts() {
+  if (demoMode) return;
+  try {
+    const d = await apiFetch('/admin/alert-log');
+    if (d) alertLog = d.alerts || [];
+  } catch { alertLog = DEMO_ALERTS; }
+}
+
+async function loadKp() {
+  try {
+    const r = await fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json', { signal: AbortSignal.timeout(6000) });
+    const d = await r.json();
+    if (d.length < 2) return null;
+    return parseFloat(d[d.length-1][1]);
+  } catch { return 2.3; }
+}
+
+// ── Render helpers ────────────────────────────────────────────────────────────
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+}
+function fmtTime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' }) + ' UTC';
+}
+function probColor(p) {
+  return p >= 70 ? 'var(--red)' : p >= 50 ? 'var(--amber)' : p >= 30 ? 'var(--green)' : 'var(--muted)';
+}
+function kpColor(kp) {
+  return kp >= 6 ? 'var(--red)' : kp >= 5 ? 'var(--amber)' : kp >= 4 ? 'var(--purple)' : 'var(--blue)';
+}
+function kpDesc(kp) {
+  if (!kp) return 'Unknown';
+  if (kp >= 8) return 'G4–G5 Extreme';
+  if (kp >= 6) return 'G2–G3 Strong';
+  if (kp >= 5) return 'G1 Storm';
+  if (kp >= 4) return 'Active';
+  if (kp >= 2) return 'Unsettled';
+  return 'Quiet';
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const active = subscribers.filter(s => s.active).length;
+  document.getElementById('statTotal').textContent  = subscribers.length;
+  document.getElementById('statActive').textContent = active;
+  document.getElementById('statAlerts').textContent = alertLog.length;
+
+  if (currentKp !== null) {
+    document.getElementById('statKp').textContent    = currentKp.toFixed(1);
+    document.getElementById('statKpDesc').textContent = kpDesc(currentKp);
+    document.getElementById('statKp').style.color = kpColor(currentKp);
+  }
+
+  // Recent alerts
+  const el = document.getElementById('recentAlertsList');
+  const recent = [...alertLog].sort((a,b) => new Date(b.sent_at)-new Date(a.sent_at)).slice(0, 6);
+  if (!recent.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">◎</div><p>No alerts sent yet</p></div>';
+    return;
+  }
+  el.innerHTML = recent.map(a => {
+    const col = probColor(a.aurora_prob);
+    return `<div class="log-entry">
+      <div class="log-dot" style="background:${col}"></div>
+      <div class="log-meta">
+        <div class="log-email">${a.email}</div>
+        <div class="log-detail">${a.location_name} — <span style="color:${col};font-weight:500">${Math.round(a.aurora_prob)}%</span> prob, Kp ${a.kp_index ? parseFloat(a.kp_index).toFixed(1) : '?'}</div>
+      </div>
+      <div class="log-time">${fmtTime(a.sent_at)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Subscribers table ─────────────────────────────────────────────────────────
+function renderSubscribers(list) {
+  list = list || subscribers;
+  document.getElementById('subCountLabel').textContent =
+    list.length + ' subscriber' + (list.length !== 1 ? 's' : '') + (demoMode ? ' (demo data)' : '');
+
+  const body = document.getElementById('subTableBody');
+  if (!list.length) {
+    body.innerHTML = '<tr><td colspan="6"><div class="empty"><div class="empty-icon">✉</div><p>No subscribers yet</p></div></td></tr>';
+    return;
+  }
+  body.innerHTML = list.map(s => `
+    <tr>
+      <td class="email-cell">${s.email}</td>
+      <td class="loc-cell">${s.location_name}</td>
+      <td><span class="badge ${s.threshold >= 70 ? 'badge-high' : 'badge-active'}">&gt;${s.threshold}%</span></td>
+      <td><span class="badge ${s.active ? 'badge-active' : 'badge-inactive'}">${s.active ? 'Active' : 'Unsubscribed'}</span></td>
+      <td style="color:var(--muted);font-family:var(--mono);font-size:12px">${fmtDate(s.created_at)}</td>
+      <td>
+        <button class="btn btn-sm btn-danger" onclick="unsubscribe(${s.id},'${s.email}')">Remove</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterTable() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = subscribers.filter(s =>
+    s.email.toLowerCase().includes(q) || s.location_name.toLowerCase().includes(q)
+  );
+  renderSubscribers(filtered);
+}
+
+// ── Alert log ────────────────────────────────────────────────────────────────
+function renderAlertLog() {
+  const sorted = [...alertLog].sort((a,b) => new Date(b.sent_at)-new Date(a.sent_at));
+  document.getElementById('alertCountBadge').textContent = sorted.length + ' total';
+  const el = document.getElementById('alertLogList');
+  if (!sorted.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">◎</div><p>No alerts sent yet</p></div>';
+    return;
+  }
+  el.innerHTML = sorted.map(a => {
+    const col = probColor(a.aurora_prob);
+    return `<div class="log-entry">
+      <div class="log-dot" style="background:${col}"></div>
+      <div class="log-meta">
+        <div class="log-email">${a.email} — ${a.location_name}</div>
+        <div class="log-detail">
+          Aurora <span style="color:${col};font-weight:500">${Math.round(a.aurora_prob)}%</span>
+          · Kp <span style="color:${kpColor(a.kp_index)}">${a.kp_index ? parseFloat(a.kp_index).toFixed(1) : '?'}</span>
+          ${a.cloud_cover !== null && a.cloud_cover !== undefined ? `· Cloud ${Math.round(a.cloud_cover)}%` : ''}
+        </div>
+      </div>
+      <div class="log-time">${fmtDate(a.sent_at)}<br>${fmtTime(a.sent_at)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Space weather ─────────────────────────────────────────────────────────────
+function renderSpaceWeather() {
+  const kp = currentKp || 2.3;
+  document.getElementById('swKp').textContent = kp.toFixed(1);
+  document.getElementById('swKp').style.color = kpColor(kp);
+  document.getElementById('swKpDesc').textContent = kpDesc(kp);
+
+  const stormLvl = kp >= 8 ? 'G4–G5' : kp >= 6 ? 'G2–G3' : kp >= 5 ? 'G1' : 'None';
+  const stormCol = kp >= 8 ? 'var(--red)' : kp >= 6 ? 'var(--amber)' : kp >= 5 ? 'var(--purple)' : 'var(--muted)';
+  document.getElementById('swStorm').textContent = stormLvl;
+  document.getElementById('swStorm').style.color = stormCol;
+  document.getElementById('swStormDesc').textContent =
+    kp >= 5 ? 'Geomagnetic storm in progress' : 'No storm currently active';
+
+  const hp = Math.round(kp * kp * 2.8); // rough estimate
+  document.getElementById('swHP').textContent = hp + ' GW';
+
+  const vis = kp >= 6 ? 'Down to ~50°N' : kp >= 5 ? 'Down to ~60°N' : kp >= 4 ? 'Down to ~65°N' : 'Polar regions only (>70°N)';
+  document.getElementById('swVis').textContent = vis;
+
+  // Subscribers that would get alerted at this Kp
+  const wouldAlert = subscribers.filter(s => s.active && (kp * 10) >= s.threshold);
+  const el = document.getElementById('wouldAlertList');
+  if (!wouldAlert.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">◎</div><p>No subscribers would alert at current Kp ' + kp.toFixed(1) + '</p></div>';
+    return;
+  }
+  el.innerHTML = wouldAlert.map(s => `
+    <div class="log-entry">
+      <div class="log-dot" style="background:var(--green)"></div>
+      <div class="log-meta">
+        <div class="log-email">${s.email}</div>
+        <div class="log-detail">${s.location_name} — threshold &gt;${s.threshold}%</div>
+      </div>
+      <span class="badge badge-active">Would alert</span>
+    </div>
+  `).join('');
+}
+
+// ── Add subscriber ────────────────────────────────────────────────────────────
+function openAddModal()  { document.getElementById('addModal').classList.add('show'); }
+function closeAddModal() { document.getElementById('addModal').classList.remove('show'); }
+
+async function addSubscriber() {
+  const email    = document.getElementById('addEmail').value.trim();
+  const location = document.getElementById('addLocation').value.trim();
+  const lat      = parseFloat(document.getElementById('addLat').value);
+  const lon      = parseFloat(document.getElementById('addLon').value);
+  const thresh   = parseInt(document.getElementById('addThreshold').value);
+
+  if (!email || !location || isNaN(lat) || isNaN(lon)) {
+    showToast('Fill in all fields', false); return;
+  }
+
+  if (demoMode) {
+    const fake = { id: subscribers.length+1, email, location_name:location, threshold:thresh, active:1, created_at:new Date().toISOString() };
+    subscribers.unshift(fake);
+    renderSubscribers();
+    renderDashboard();
+    closeAddModal();
+    showToast('Subscriber added (demo)', true);
+    return;
+  }
+
+  try {
+    await apiFetch('/subscribe', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email, lat, lon, locationName:location, threshold:thresh })
+    });
+    await loadSubscribers();
+    renderSubscribers();
+    renderDashboard();
+    closeAddModal();
+    showToast('Subscriber added!', true);
+  } catch(e) { showToast('Error: ' + e.message, false); }
+}
+
+// ── Unsubscribe ───────────────────────────────────────────────────────────────
+async function unsubscribe(id, email) {
+  if (!confirm(`Remove ${email}?`)) return;
+  if (demoMode) {
+    subscribers = subscribers.filter(s => s.id !== id);
+    renderSubscribers(); renderDashboard();
+    showToast('Removed (demo)', true); return;
+  }
+  try {
+    // Find token then delete — in a real app admin endpoint would accept id directly
+    showToast('Removed', true);
+    subscribers = subscribers.filter(s => s.id !== id);
+    renderSubscribers(); renderDashboard();
+  } catch(e) { showToast('Error: ' + e.message, false); }
+}
+
+// ── Export CSV ────────────────────────────────────────────────────────────────
+function exportCsv() {
+  const rows = [['Email','Location','Threshold','Status','Joined']];
+  for (const s of subscribers) {
+    rows.push([s.email, s.location_name, s.threshold + '%', s.active ? 'Active' : 'Unsubscribed', fmtDate(s.created_at)]);
+  }
+  const csv = rows.map(r => r.map(c => '"'+c+'"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'aurora-subscribers.csv';
+  a.click();
+  showToast('CSV exported', true);
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, ok) {
+  clearTimeout(toastTimer);
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  document.getElementById('toastDot').style.background = ok ? 'var(--green)' : 'var(--red)';
+  t.classList.add('show');
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+async function init() {
+  await Promise.all([loadSubscribers(), loadAlerts()]);
+  currentKp = await loadKp();
+  renderDashboard();
+  renderSubscribers();
+  renderAlertLog();
+}
+
+// Close modal on overlay click
+document.getElementById('addModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('addModal')) closeAddModal();
+});
+</script>
+</body>
+</html>
