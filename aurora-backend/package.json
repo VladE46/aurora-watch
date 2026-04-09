@@ -1,7 +1,7 @@
 {
   "name": "aurora-backend",
   "version": "1.0.0",
-  "description": "Aurora Watch backend — subscriber management, NOAA polling, Brevo email alerts",
+  "description": "Aurora Check backend — subscriber management, NOAA polling, Brevo email alerts",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
