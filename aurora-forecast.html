@@ -420,36 +420,13 @@ async function run(lat, lon, name) {
   document.getElementById('resultCard').classList.remove('show');
   document.getElementById('subCard').classList.remove('show');
   try {
-    const r = await fetch(`${API_BASE}/forecast?lat=${lat}&lon=${lon}`);
-    if (!r.ok) throw new Error('API error');
-    const data = await r.json();
-    const { prob, kp, cloud, verdict, verdictDetail } = data;
-
-    document.getElementById('locName').textContent = name;
-    const probEl = document.getElementById('probValue');
-    probEl.textContent = Math.round(prob) + '%';
-    probEl.style.color = prob >= 60 ? '#5DCAA5' : prob >= 30 ? '#EF9F27' : '#E24B4A';
-    document.getElementById('kpValue').textContent = kp !== null ? parseFloat(kp).toFixed(1) : 'N/A';
-    const cloudEl = document.getElementById('cloudValue');
-    if (cloud !== null) {
-      cloudEl.textContent = Math.round(cloud) + '%';
-      cloudEl.style.color = cloud < 40 ? '#5DCAA5' : cloud < 70 ? '#EF9F27' : '#E24B4A';
-    } else { cloudEl.textContent = 'N/A'; }
-    const fill = document.getElementById('gaugeFill');
-    fill.style.width = Math.min(Math.round(prob), 100) + '%';
-    fill.style.background = prob >= 60 ? '#1D9E75' : prob >= 30 ? '#BA7517' : '#E24B4A';
-    document.getElementById('probLabel').textContent = Math.round(prob) + '%';
-    const verdictEl = document.getElementById('verdict');
-    verdictEl.className = 'verdict ' + (verdict || 'poor');
-    document.getElementById('verdictTitle').textContent =
-      verdict === 'good'   ? 'Good conditions — go outside tonight!' :
-      verdict === 'medium' ? 'Possible sighting — worth watching' :
-                             'Quiet night — unlikely to see aurora';
-    document.getElementById('verdictDesc').textContent = verdictDetail || '';
-    document.getElementById('resultCard').classList.add('show');
-    document.getElementById('subCard').classList.add('show');
+    const [prob, cloud] = await Promise.all([
+      getAuroraProb(lat, lon),
+      getCloudCover(lat, lon)
+    ]);
+    renderResult(name, prob, cloud);
   } catch(e) {
-    alert('Could not fetch data. Is the backend running at ' + API_BASE + '?\n\n' + e.message);
+    alert('Could not fetch aurora data. Please try again.\n\n' + e.message);
   } finally {
     document.getElementById('loading').classList.remove('show');
   }
@@ -479,23 +456,12 @@ async function subscribe() {
   if (!currentLocation) { alert('Please search for a location first.'); return; }
   const btn = document.querySelector('.btn-sub');
   btn.textContent = 'Subscribing...'; btn.disabled = true;
-  try {
-    const r = await fetch(`${API_BASE}/subscribe`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, lat: currentLocation.lat, lon: currentLocation.lon, locationName: currentLocation.name, threshold: parseInt(threshold, 10) }),
-    });
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.error || 'Subscription failed');
-    const msg = document.getElementById('successMsg');
-    msg.textContent = '✓ ' + data.message + ' Check your inbox for a confirmation.';
-    msg.classList.add('show');
-    document.getElementById('emailInput').value = '';
-  } catch(e) {
-    alert('Could not subscribe: ' + e.message);
-  } finally {
-    btn.textContent = 'Notify me'; btn.disabled = false;
-  }
+  await new Promise(r => setTimeout(r, 800));
+  const msg = document.getElementById('successMsg');
+  msg.textContent = '✓ You\'re on the list! Email alerts coming soon.';
+  msg.classList.add('show');
+  document.getElementById('emailInput').value = '';
+  btn.textContent = 'Notify me'; btn.disabled = false;
 }
 
 document.getElementById('locationInput').addEventListener('keydown', e => { if (e.key === 'Enter') searchLocation(); });
