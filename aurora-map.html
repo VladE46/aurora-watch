@@ -235,15 +235,9 @@ function noaaJsonUrl() {
   return `https://services.swpc.noaa.gov/json/ovation_aurora_latest.json`;
 }
 
-// ── NOAA JSON via backend proxy (to avoid CORS), falls back to image approach ──
+// ── NOAA JSON direct fetch ──
 async function fetchNoaaJson() {
-  // Try backend proxy first
-  try {
-    const r = await fetch('https://api.auroracheck.com/api/aurora-grid', { signal: AbortSignal.timeout(4000) });
-    if (r.ok) return await r.json();
-  } catch {}
-
-  // Direct fetch (works if backend proxies it, or NOAA enables CORS)
+  // Direct fetch from NOAA
   try {
     const r = await fetch(noaaJsonUrl(), { signal: AbortSignal.timeout(6000) });
     if (r.ok) {
