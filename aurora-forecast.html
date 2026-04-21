@@ -365,6 +365,12 @@ function kpFromProb(p) {
 
 function renderResult(name, prob, cloud) {
   document.getElementById('locName').textContent = name;
+  // Show coordinates in the sub-line below the city name
+  if (window.currentLocation) {
+    const lat = window.currentLocation.lat.toFixed(2);
+    const lon = window.currentLocation.lon.toFixed(2);
+    document.getElementById('locSub').textContent = lat + '°, ' + lon + '°  ·  NOAA OVATION model · Updated just now';
+  }
 
   // Update hero summary line with location-specific message
   const cityName = name.split(',')[0].trim();
@@ -460,7 +466,17 @@ function useMyLocation() {
   if (!navigator.geolocation) { alert('Geolocation is not supported by your browser.'); return; }
   navigator.geolocation.getCurrentPosition(async pos => {
     const { latitude: lat, longitude: lon } = pos.coords;
-    await run(lat, lon, 'Your location (' + lat.toFixed(2) + '°, ' + lon.toFixed(2) + '°)');
+    // Reverse geocode to get city name
+    let name = 'Your location (' + lat.toFixed(2) + '°, ' + lon.toFixed(2) + '°)';
+    try {
+      const r = await fetch('https://geocoding-api.open-meteo.com/v1/reverse?latitude=' + lat + '&longitude=' + lon + '&count=1');
+      const d = await r.json();
+      if (d.results && d.results.length) {
+        const res = d.results[0];
+        name = (res.name || '') + (res.admin1 ? ', ' + res.admin1 : '') + (res.country ? ', ' + res.country : '');
+      }
+    } catch {}
+    await run(lat, lon, name);
   }, () => alert('Could not get your location. Please type a city name.'));
 }
 
