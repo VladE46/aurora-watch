@@ -206,7 +206,7 @@
   <div class="aurora-band"></div>
   <div class="hero-content">
     <h1>Will you see the <span class="accent">aurora</span> tonight?</h1>
-    <p>Real-time probability forecast for your location — powered by NOAA space weather data.</p>
+    <p id="heroSummary">Real-time probability forecast for your location — powered by NOAA space weather data.</p>
     <div class="search-wrap">
       <input type="text" id="locationInput" placeholder="Search a city — e.g. Tromsø, Fairbanks, Rovaniemi..." />
       <button class="btn-primary" onclick="searchLocation()">Check now</button>
@@ -366,6 +366,19 @@ function kpFromProb(p) {
 function renderResult(name, prob, cloud) {
   document.getElementById('locName').textContent = name;
 
+  // Update hero summary line with location-specific message
+  const cityName = name.split(',')[0].trim();
+  const pct = Math.round(prob);
+  let summaryText;
+  if (pct >= 60) {
+    summaryText = `🌌 High chance of aurora in ${cityName} tonight — go outside!`;
+  } else if (pct >= 30) {
+    summaryText = `✨ ${pct}% chance of seeing aurora in ${cityName} tonight — worth watching.`;
+  } else {
+    summaryText = `${pct}% chance of aurora in ${cityName} tonight — quiet conditions.`;
+  }
+  document.getElementById('heroSummary').textContent = summaryText;
+
   const probEl = document.getElementById('probValue');
   probEl.textContent = Math.round(prob) + '%';
   probEl.style.color = prob >= 60 ? '#5DCAA5' : prob >= 30 ? '#EF9F27' : '#E24B4A';
@@ -419,6 +432,7 @@ async function run(lat, lon, name) {
   document.getElementById('loading').classList.add('show');
   document.getElementById('resultCard').classList.remove('show');
   document.getElementById('subCard').classList.remove('show');
+  document.getElementById('heroSummary').textContent = 'Fetching aurora data for ' + name.split(',')[0] + '...';
   try {
     const [prob, cloud] = await Promise.all([
       getAuroraProb(lat, lon),
@@ -426,6 +440,7 @@ async function run(lat, lon, name) {
     ]);
     renderResult(name, prob, cloud);
   } catch(e) {
+    document.getElementById('heroSummary').textContent = 'Real-time probability forecast for your location — powered by NOAA space weather data.';
     alert('Could not fetch aurora data. Please try again.\n\n' + e.message);
   } finally {
     document.getElementById('loading').classList.remove('show');
