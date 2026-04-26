@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AuroraCheck &mdash; Will You See the Aurora Tonight?</title>
-<meta name="description" content="Real-time aurora borealis forecast for any location. Check your aurora probability, Kp index and cloud cover &mdash; powered by NOAA OVATION data." />
+<title>AuroraCheck — Will You See the Aurora Tonight?</title>
+<meta name="description" content="Real-time aurora borealis forecast for any location. Check your aurora probability, Kp index and cloud cover — powered by NOAA OVATION data." />
 <meta name="keywords" content="aurora forecast, northern lights tonight, aurora borealis probability, Kp index, aurora checker, will I see aurora" />
 <meta name="author" content="AuroraCheck" />
 <meta name="robots" content="index, follow" />
@@ -13,13 +13,13 @@
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://www.auroracheck.com/" />
-<meta property="og:title" content="AuroraCheck &mdash; Will You See the Aurora Tonight?" />
-<meta property="og:description" content="Real-time aurora borealis forecast for any city. Check your aurora probability, Kp index and cloud cover &mdash; powered by NOAA OVATION data." />
+<meta property="og:title" content="AuroraCheck — Will You See the Aurora Tonight?" />
+<meta property="og:description" content="Real-time aurora borealis forecast for any city. Check your aurora probability, Kp index and cloud cover — powered by NOAA OVATION data." />
 <meta property="og:image" content="https://www.auroracheck.com/og-image.jpg" />
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="AuroraCheck &mdash; Will You See the Aurora Tonight?" />
+<meta name="twitter:title" content="AuroraCheck — Will You See the Aurora Tonight?" />
 <meta name="twitter:description" content="Real-time aurora borealis forecast for any city. Powered by NOAA OVATION data." />
 <meta name="twitter:image" content="https://www.auroracheck.com/og-image.jpg" />
 
@@ -238,9 +238,9 @@
   <div class="aurora-band"></div>
   <div class="hero-content">
     <h1>Will you see the <span class="accent">aurora</span> tonight?</h1>
-    <p id="heroSummary">Real-time probability forecast for your location &mdash; powered by NOAA space weather data.</p>
+    <p id="heroSummary">Real-time probability forecast for your location — powered by NOAA space weather data.</p>
     <div class="search-wrap">
-      <input type="text" id="locationInput" placeholder="Search a city &mdash; e.g. Troms&oslash;, Fairbanks, Rovaniemi..." />
+      <input type="text" id="locationInput" placeholder="Search a city — e.g. Troms&oslash;, Fairbanks, Rovaniemi..." />
       <button class="btn-primary" onclick="searchLocation()">Check now</button>
     </div>
     <button class="geo-link" onclick="useMyLocation()">&#x25CE; Use my current location</button>
@@ -258,7 +258,7 @@
   <div class="result-card" id="resultCard">
     <div class="result-header">
       <div>
-        <div class="loc-name" id="locName">&mdash;</div>
+        <div class="loc-name" id="locName">—</div>
         <div class="loc-sub" id="locSub">NOAA OVATION model &middot; Updated just now</div>
       </div>
     </div>
@@ -266,17 +266,17 @@
     <div class="metrics">
       <div class="metric">
         <div class="metric-label">Aurora chance</div>
-        <div class="metric-value" id="probValue" style="color:#5DCAA5;">&mdash;</div>
+        <div class="metric-value" id="probValue" style="color:#5DCAA5;">—</div>
         <div class="metric-unit">probability</div>
       </div>
       <div class="metric">
         <div class="metric-label">Kp index</div>
-        <div class="metric-value" id="kpValue" style="color:#AFA9EC;">&mdash;</div>
+        <div class="metric-value" id="kpValue" style="color:#AFA9EC;">—</div>
         <div class="metric-unit">geomagnetic</div>
       </div>
       <div class="metric">
         <div class="metric-label">Cloud cover</div>
-        <div class="metric-value" id="cloudValue" style="color:rgba(255,255,255,0.75);">&mdash;</div>
+        <div class="metric-value" id="cloudValue" style="color:rgba(255,255,255,0.75);">—</div>
         <div class="metric-unit">sky coverage</div>
       </div>
     </div>
@@ -284,7 +284,7 @@
     <div class="gauge-section">
       <div class="gauge-header">
         <span>Aurora probability</span>
-        <span id="probLabel">&mdash;</span>
+        <span id="probLabel">—</span>
       </div>
       <div class="gauge-bar">
         <div class="gauge-fill" id="gaugeFill" style="width:0%;background:#1D9E75;"></div>
@@ -294,15 +294,15 @@
     <div class="verdict" id="verdict">
       <div class="verdict-dot"></div>
       <div class="verdict-body">
-        <div class="verdict-title" id="verdictTitle">&mdash;</div>
-        <div class="verdict-desc" id="verdictDesc">&mdash;</div>
+        <div class="verdict-title" id="verdictTitle">—</div>
+        <div class="verdict-desc" id="verdictDesc">—</div>
       </div>
     </div>
 
     <div class="kp-guide">
-      <span class="kp-pill kp-low">Kp 0&ndash;2 &mdash; faint, high latitudes only</span>
-      <span class="kp-pill kp-med">Kp 3&ndash;4 &mdash; moderate, southern visibility</span>
-      <span class="kp-pill kp-high">Kp 5+ &mdash; strong storm, wide visibility</span>
+      <span class="kp-pill kp-low">Kp 0–2 — faint, high latitudes only</span>
+      <span class="kp-pill kp-med">Kp 3–4 — moderate, southern visibility</span>
+      <span class="kp-pill kp-high">Kp 5+ — strong storm, wide visibility</span>
     </div>
 
     <div class="data-note">
@@ -315,7 +315,7 @@
       <div class="sub-icon">&#9993;</div>
       <div>
         <h2>Get aurora alerts for tonight</h2>
-        <p>We'll email you when the probability at your location crosses your chosen threshold &mdash; so you don't miss a show.</p>
+        <p>We'll email you when the probability at your location crosses your chosen threshold — so you don't miss a show.</p>
       </div>
     </div>
     <div class="sub-form">
@@ -325,10 +325,10 @@
     <div class="threshold-row">
       <label>Alert me when probability exceeds</label>
       <select id="thresholdSelect">
-        <option value="30">30% &mdash; any activity</option>
-        <option value="50" selected>50% &mdash; good chance</option>
-        <option value="70">70% &mdash; strong activity</option>
-        <option value="90">90% &mdash; near certain</option>
+        <option value="30">30% — any activity</option>
+        <option value="50" selected>50% — good chance</option>
+        <option value="70">70% — strong activity</option>
+        <option value="90">90% — near certain</option>
       </select>
     </div>
     <div class="success-msg" id="successMsg">&#10003; You're subscribed! We'll alert you when conditions look good at your location.</div>
@@ -409,11 +409,11 @@ function renderResult(name, prob, cloud) {
   const pct = Math.round(prob);
   let summaryText;
   if (pct >= 60) {
-    summaryText = `🌌 High chance of aurora in ${cityName} tonight &mdash; go outside!`;
+    summaryText = `🌌 High chance of aurora in ${cityName} tonight — go outside!`;
   } else if (pct >= 30) {
-    summaryText = `✨ ${pct}% chance of seeing aurora in ${cityName} tonight &mdash; worth watching.`;
+    summaryText = `✨ ${pct}% chance of seeing aurora in ${cityName} tonight — worth watching.`;
   } else {
-    summaryText = `${pct}% chance of aurora in ${cityName} tonight &mdash; quiet conditions.`;
+    summaryText = `${pct}% chance of aurora in ${cityName} tonight — quiet conditions.`;
   }
   document.getElementById('heroSummary').textContent = summaryText;
 
@@ -445,7 +445,7 @@ function renderResult(name, prob, cloud) {
 
   if (prob >= 60 && !cloudy) {
     verdict.classList.add('good');
-    title.textContent = 'Good conditions &mdash; go outside tonight!';
+    title.textContent = 'Good conditions — go outside tonight!';
     desc.textContent = 'Strong geomagnetic activity and clear skies. Head to a dark spot away from city lights for the best view.';
   } else if (prob >= 60 && cloudy) {
     verdict.classList.add('medium');
@@ -453,11 +453,11 @@ function renderResult(name, prob, cloud) {
     desc.textContent = 'Activity is high (Kp ' + kp + '), but ' + Math.round(cloud) + '% cloud cover will likely obscure visibility. Watch for breaks in the cloud.';
   } else if (prob >= 30) {
     verdict.classList.add('medium');
-    title.textContent = 'Possible sighting &mdash; worth watching';
+    title.textContent = 'Possible sighting — worth watching';
     desc.textContent = 'Moderate geomagnetic activity. Best visible from dark, high-latitude locations. Keep an eye on updates throughout the evening.';
   } else {
     verdict.classList.add('poor');
-    title.textContent = 'Quiet night &mdash; unlikely to see aurora';
+    title.textContent = 'Quiet night — unlikely to see aurora';
     desc.textContent = 'Low geomagnetic activity at your location. Consider checking locations further north, or wait for the next solar event.';
   }
 
@@ -479,7 +479,7 @@ async function run(lat, lon, name) {
     renderResult(name, prob, cloud);
     checkSightings(lat);
   } catch(e) {
-    document.getElementById('heroSummary').textContent = 'Real-time probability forecast for your location &mdash; powered by NOAA space weather data.';
+    document.getElementById('heroSummary').textContent = 'Real-time probability forecast for your location — powered by NOAA space weather data.';
     alert('Could not fetch aurora data. Please try again.\n\n' + e.message);
   } finally {
     document.getElementById('loading').classList.remove('show');
@@ -552,22 +552,22 @@ async function checkSightings(lat) {
     const desc = document.getElementById('sightingDesc');
 
     if (maxKp >= 5 && absLat >= visibilityLat) {
-      // Strong storm &mdash; likely seen
+      // Strong storm — likely seen
       inner.style.background = 'rgba(29,158,117,0.15)';
       inner.style.border = '1px solid rgba(29,158,117,0.4)';
       icon.textContent = '🌌';
       title.style.color = '#5DCAA5';
       title.textContent = 'Aurora was likely visible here tonight!';
-      desc.textContent = `Kp reached ${maxKp.toFixed(1)} in the last 3 hours &mdash; strong enough to see aurora at your latitude. Check local sky reports or look outside if skies are clear!`;
+      desc.textContent = `Kp reached ${maxKp.toFixed(1)} in the last 3 hours — strong enough to see aurora at your latitude. Check local sky reports or look outside if skies are clear!`;
       banner.style.display = 'block';
     } else if (maxKp >= 3 && absLat >= visibilityLat - 10) {
-      // Moderate &mdash; possible sighting
+      // Moderate — possible sighting
       inner.style.background = 'rgba(239,159,39,0.12)';
       inner.style.border = '1px solid rgba(239,159,39,0.35)';
       icon.textContent = '✨';
       title.style.color = '#EF9F27';
       title.textContent = 'Aurora may have been visible nearby tonight';
-      desc.textContent = `Kp hit ${maxKp.toFixed(1)} recently &mdash; moderate activity. People at higher latitudes in your region may have spotted it.`;
+      desc.textContent = `Kp hit ${maxKp.toFixed(1)} recently — moderate activity. People at higher latitudes in your region may have spotted it.`;
       banner.style.display = 'block';
     } else if (maxKp >= 2 && absLat >= 55) {
       // Low but high-latitude
@@ -576,13 +576,13 @@ async function checkSightings(lat) {
       icon.textContent = '🔭';
       title.style.color = '#58a6ff';
       title.textContent = 'Faint aurora possible at your latitude tonight';
-      desc.textContent = `Kp is ${maxKp.toFixed(1)} &mdash; low activity, but at your latitude even faint auroras can appear. Best viewed away from city lights.`;
+      desc.textContent = `Kp is ${maxKp.toFixed(1)} — low activity, but at your latitude even faint auroras can appear. Best viewed away from city lights.`;
       banner.style.display = 'block';
     } else {
       banner.style.display = 'none';
     }
   } catch(e) {
-    // Silently fail &mdash; sighting info is bonus, not critical
+    // Silently fail — sighting info is bonus, not critical
   }
 }
 
