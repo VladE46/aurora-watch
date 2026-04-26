@@ -3,7 +3,39 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AuroraCheck — Will you see the aurora tonight?</title>
+<title>AuroraCheck — Will You See the Aurora Tonight?</title>
+<meta name="description" content="Real-time aurora borealis forecast for any location. Check your aurora probability, Kp index and cloud cover — powered by NOAA OVATION data." />
+<meta name="keywords" content="aurora forecast, northern lights tonight, aurora borealis probability, Kp index, aurora checker, will I see aurora" />
+<meta name="author" content="AuroraCheck" />
+<meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://www.auroracheck.com/" />
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://www.auroracheck.com/" />
+<meta property="og:title" content="AuroraCheck — Will You See the Aurora Tonight?" />
+<meta property="og:description" content="Real-time aurora borealis forecast for any city. Check your aurora probability, Kp index and cloud cover — powered by NOAA OVATION data." />
+<meta property="og:image" content="https://www.auroracheck.com/og-image.jpg" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="AuroraCheck — Will You See the Aurora Tonight?" />
+<meta name="twitter:description" content="Real-time aurora borealis forecast for any city. Powered by NOAA OVATION data." />
+<meta name="twitter:image" content="https://www.auroracheck.com/og-image.jpg" />
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "AuroraCheck",
+  "url": "https://www.auroracheck.com",
+  "description": "Real-time aurora borealis forecast for any location on Earth. Powered by NOAA OVATION space weather data.",
+  "applicationCategory": "WeatherApplication",
+  "operatingSystem": "All",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0c0c1a; color: #fff; min-height: 100vh; }
@@ -445,6 +477,7 @@ async function run(lat, lon, name) {
       getCloudCover(lat, lon)
     ]);
     renderResult(name, prob, cloud);
+    checkSightings(lat);
   } catch(e) {
     document.getElementById('heroSummary').textContent = 'Real-time probability forecast for your location — powered by NOAA space weather data.';
     alert('Could not fetch aurora data. Please try again.\n\n' + e.message);
@@ -493,6 +526,64 @@ async function subscribe() {
   msg.classList.add('show');
   document.getElementById('emailInput').value = '';
   btn.textContent = 'Notify me'; btn.disabled = false;
+}
+
+
+// ── SIGHTING DETECTION ─────────────────────────────────────────
+// Was aurora actually seen tonight? Based on real Kp 1-hour data from NOAA
+async function checkSightings(lat) {
+  try {
+    // Fetch last 24h of Kp observations
+    const r = await fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json');
+    if (!r.ok) return;
+    const data = await r.json();
+    // data[0] is headers, rest are rows: [time_tag, kp, observed, noaa_scale]
+    const recent = data.slice(-8); // last ~3 hours (data is every 3h)
+    const maxKp = Math.max(...recent.slice(1).map(row => parseFloat(row[1]) || 0));
+
+    // Estimate visibility latitude threshold from Kp
+    // Kp 0 = 90°, Kp 9 = 45° (roughly: threshold = 90 - 5*Kp)
+    const visibilityLat = 90 - (5 * maxKp);
+    const absLat = Math.abs(lat);
+    const banner = document.getElementById('sightingBanner');
+    const inner = document.getElementById('sightingInner');
+    const icon = document.getElementById('sightingIcon');
+    const title = document.getElementById('sightingTitle');
+    const desc = document.getElementById('sightingDesc');
+
+    if (maxKp >= 5 && absLat >= visibilityLat) {
+      // Strong storm — likely seen
+      inner.style.background = 'rgba(29,158,117,0.15)';
+      inner.style.border = '1px solid rgba(29,158,117,0.4)';
+      icon.textContent = '🌌';
+      title.style.color = '#5DCAA5';
+      title.textContent = 'Aurora was likely visible here tonight!';
+      desc.textContent = `Kp reached ${maxKp.toFixed(1)} in the last 3 hours — strong enough to see aurora at your latitude. Check local sky reports or look outside if skies are clear!`;
+      banner.style.display = 'block';
+    } else if (maxKp >= 3 && absLat >= visibilityLat - 10) {
+      // Moderate — possible sighting
+      inner.style.background = 'rgba(239,159,39,0.12)';
+      inner.style.border = '1px solid rgba(239,159,39,0.35)';
+      icon.textContent = '✨';
+      title.style.color = '#EF9F27';
+      title.textContent = 'Aurora may have been visible nearby tonight';
+      desc.textContent = `Kp hit ${maxKp.toFixed(1)} recently — moderate activity. People at higher latitudes in your region may have spotted it.`;
+      banner.style.display = 'block';
+    } else if (maxKp >= 2 && absLat >= 55) {
+      // Low but high-latitude
+      inner.style.background = 'rgba(88,166,255,0.1)';
+      inner.style.border = '1px solid rgba(88,166,255,0.25)';
+      icon.textContent = '🔭';
+      title.style.color = '#58a6ff';
+      title.textContent = 'Faint aurora possible at your latitude tonight';
+      desc.textContent = `Kp is ${maxKp.toFixed(1)} — low activity, but at your latitude even faint auroras can appear. Best viewed away from city lights.`;
+      banner.style.display = 'block';
+    } else {
+      banner.style.display = 'none';
+    }
+  } catch(e) {
+    // Silently fail — sighting info is bonus, not critical
+  }
 }
 
 document.getElementById('locationInput').addEventListener('keydown', e => { if (e.key === 'Enter') searchLocation(); });
